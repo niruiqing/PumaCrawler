@@ -1,0 +1,70 @@
+{
+  "name": "Scuderia Ferrari",
+  "price": "55",
+  "currency": "USD",
+  "original_price": "",
+  "description": "The PUMA and Scuderia Ferrari collection celebrates motorsport excellence and Ferrari's legendary racing legacy. This lineup of shoes, clothing, and accessories blends style, comfort, and performance with the signature Scuderia Ferrari colors and details, letting you carry the Ferrari heritage with you wherever you go.",
+  "color": "Color Code: 01",
+  "brand": "PUMA",
+  "sizes": [
+    "Mens XS",
+    "Mens S",
+    "Mens M",
+    "Mens L",
+    "Mens XL",
+    "Mens XXL"
+  ],
+  "images": [
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/632782/01/mod01/fnd/PNA/fmt/png/Scuderia-Ferrari-Sportswear-CS-Polo-Men",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/632782/01/mod02/fnd/PNA/fmt/png/Scuderia-Ferrari-Sportswear-CS-Polo-Men",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/632782/01/mod03/fnd/PNA/fmt/png/Scuderia-Ferrari-Sportswear-CS-Polo-Men",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/632782/01/fnd/PNA/fmt/png/Scuderia-Ferrari-Sportswear-CS-Polo-Men",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/632782/01/bv/fnd/PNA/fmt/png/Scuderia-Ferrari-Sportswear-CS-Polo-Men"
+  ],
+  "product_id": "",
+  "availability": "",
+  "features": [],
+  "url": "https://us.puma.com/us/en/pd/scuderia-ferrari-sportswear-cs-polo-men/632782?swatch=01",
+  "scraped_at": "2025-08-23T00:03:00.651531",
+  "method": "enhanced_with_sizes",
+  "available_sizes": [
+    "Mens XS",
+    "Mens S",
+    "Mens M",
+    "Mens L",
+    "Mens XL",
+    "Mens XXL"
+  ],
+  "unavailable_sizes": [],
+  "size_groups": [
+    {
+      "label": "Mens",
+      "sizes": [
+        {
+          "label": "XS",
+          "orderable": true
+        },
+        {
+          "label": "S",
+          "orderable": true
+        },
+        {
+          "label": "M",
+          "orderable": true
+        },
+        {
+          "label": "L",
+          "orderable": true
+        },
+        {
+          "label": "XL",
+          "orderable": true
+        },
+        {
+          "label": "XXL",
+          "orderable": true
+        }
+      ]
+    }
+  ]
+}

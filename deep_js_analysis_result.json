@@ -1,0 +1,40 @@
+{
+  "url": "https://us.puma.com/us/en/pd/evospeed-mid-distance-nitro-elite-3-track--field-distance-spikes/312637?swatch=01",
+  "total_sizes_found": 0,
+  "extracted_sizes": [],
+  "analysis_summary": {
+    "product_data_objects": 0,
+    "size_data_objects": 0,
+    "raw_objects": 2
+  },
+  "detailed_data": {
+    "product_data": [],
+    "size_data": [],
+    "variant_data": [],
+    "inventory_data": [],
+    "raw_objects": [
+      {
+        "script_index": 30,
+        "type": "product_id_object",
+        "data": {
+          "swatch": "01",
+          "country": "us",
+          "language": "en",
+          "model": "evospeed-mid-distance-nitro-elite-3-track--field-distance-spikes",
+          "id": "312637"
+        }
+      },
+      {
+        "script_index": 30,
+        "type": "product_id_object",
+        "data": {
+          "swatch": "01",
+          "country": "us",
+          "language": "en",
+          "model": "evospeed-mid-distance-nitro-elite-3-track--field-distance-spikes",
+          "id": "312637"
+        }
+      }
+    ]
+  }
+}
