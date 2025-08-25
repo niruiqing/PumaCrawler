@@ -26,6 +26,8 @@ except ImportError:
 import json
 from datetime import datetime
 import traceback
+import re
+from html import unescape
 
 # 添加src目录到Python路径
 src_path = os.path.join(os.path.dirname(__file__), 'src')
@@ -159,6 +161,8 @@ def scrape_product():
                         'unavailable_sizes': getattr(product_info, 'unavailable_sizes', []),
                         'size_chart_id': getattr(product_info, 'size_chart_id', ''),
                         'images': getattr(product_info, 'images', []),
+                        'main_images': getattr(product_info, 'main_images', []),
+                        'sku_images': getattr(product_info, 'sku_images', []),
                         'preview_image': getattr(product_info, 'preview_image', ''),
                         'vertical_images': getattr(product_info, 'vertical_images', []),
                         'orderable': getattr(product_info, 'orderable', True),
@@ -182,6 +186,8 @@ def scrape_product():
                         'product_division': getattr(product_info, 'product_division', ''),
                         'breadcrumb': getattr(product_info, 'breadcrumb', []),
                         'navigation_path': getattr(product_info, 'navigation_path', ''),
+                        'all_variations': getattr(product_info, 'all_variations', []),
+                        'current_variation': getattr(product_info, 'current_variation', {}),
                         'scraped_at': getattr(product_info, 'scraped_at', '') or datetime.now().isoformat(),
                         'method': 'new_graphql',
                         'url': url
@@ -218,6 +224,75 @@ def scrape_product():
             'success': False,
             'error': f'处理请求时发生错误: {error_msg}\n\n可能原因：\n1. 网络连接问题\n2. 服务器限制或认证问题\n3. 商品URL格式错误\n\n请稍后再试或检查网络连接'
         })
+
+def parse_long_description_html(html_content):
+    """
+    解析longDescription中的HTML内容，提取标题和列表项
+    
+    Args:
+        html_content (str): HTML格式的长描述内容
+    
+    Returns:
+        dict: 包含解析后的结构化数据
+    """
+    if not html_content or not isinstance(html_content, str):
+        return {}
+    
+    try:
+        # 解析结果存储
+        parsed_data = {}
+        
+        # HTML实体解码
+        html_content = unescape(html_content)
+        
+        # 查找所有h3标题和对应的ul列表
+        # 匹配模式：<h3>标题</h3>后面可能跟着文本或<ul>列表
+        pattern = r'<h3[^>]*>\s*([^<]+?)\s*</h3>([\s\S]*?)(?=<h3|$)'
+        
+        matches = re.findall(pattern, html_content, re.IGNORECASE | re.DOTALL)
+        
+        for title, content in matches:
+            # 清理标题
+            clean_title = title.strip()
+            
+            # 初始化该标题的数据
+            section_data = {
+                'title': clean_title,
+                'text': '',
+                'list_items': []
+            }
+            
+            # 查找该部分中的列表项
+            li_pattern = r'<li[^>]*>\s*([\s\S]*?)\s*</li>'
+            list_items = re.findall(li_pattern, content, re.IGNORECASE | re.DOTALL)
+            
+            for item in list_items:
+                # 移除HTML标签，保留纯文本
+                clean_item = re.sub(r'<[^>]+>', '', item)
+                # 清理多余的空白字符
+                clean_item = re.sub(r'\s+', ' ', clean_item).strip()
+                if clean_item:
+                    section_data['list_items'].append(clean_item)
+            
+            # 提取非列表的文本内容
+            # 移除ul标签及其内容
+            text_content = re.sub(r'<ul[^>]*>[\s\S]*?</ul>', '', content, flags=re.IGNORECASE)
+            # 移除所有HTML标签
+            text_content = re.sub(r'<[^>]+>', '', text_content)
+            # 清理空白字符
+            text_content = re.sub(r'\s+', ' ', text_content).strip()
+            
+            if text_content:
+                section_data['text'] = text_content
+            
+            # 使用标题作为key存储
+            parsed_data[clean_title] = section_data
+        
+        return parsed_data
+        
+    except Exception as e:
+        print(f"❌ 解析longDescription HTML时发生错误: {e}")
+        return {}
 
 def format_product_for_display(product_dict):
     """格式化商品信息以便前端显示（适配PumaScraper数据结构）"""
@@ -275,8 +350,16 @@ def format_product_for_display(product_dict):
         sizes_info['metric_measurements'] = metric_measurements
         sizes_info['imperial_measurements'] = imperial_measurements
     
-    # 处理图片信息
+    # 处理图片信息（增强版，支持主要图片和SKU图片分离）
     images = product_dict.get('images', [])
+    main_images = product_dict.get('main_images', [])
+    sku_images = product_dict.get('sku_images', [])
+    preview_image = product_dict.get('preview_image', '')
+    
+    # 如果没有分离的图片数据，使用原有图片作为主要图片
+    if not main_images and not sku_images and images:
+        main_images = images[:1]  # 第一张作为主要图片
+        sku_images = images[1:]   # 其余作为SKU图片
     
     # 处理材料组成（增强版）
     materials = product_dict.get('materials', [])
@@ -337,6 +420,11 @@ def format_product_for_display(product_dict):
             'value': product_dict.get('color_value', '') or product_dict.get('color_code', '')
         },
         'images': images,
+        'main_images': main_images,
+        'sku_images': sku_images,
+        'preview_image': preview_image,
+        'all_variations': product_dict.get('all_variations', []),
+        'current_variation': process_current_variation(product_dict.get('current_variation', {})),
         'sizes': sizes_info,
         'metric_measurements': product_dict.get('metric_measurements', []),
         'imperial_measurements': product_dict.get('imperial_measurements', []),
@@ -359,6 +447,41 @@ def format_product_for_display(product_dict):
         'method': product_dict.get('method', 'requests'),
         'url': product_dict.get('url', '')
     }
+
+def process_current_variation(current_variation):
+    """
+    处理当前变体信息，解析longDescription中HTML内容
+    
+    Args:
+        current_variation (dict): 当前变体信息
+    
+    Returns:
+        dict: 处理后的变体信息
+    """
+    if not current_variation:
+        return {}
+    
+    # 复制原始数据，避免修改原对象
+    processed_variation = current_variation.copy()
+    
+    # 处理longDescription
+    long_description = current_variation.get('longDescription', '')
+    if long_description:
+        # 解析HTML内容
+        parsed_content = parse_long_description_html(long_description)
+        
+        # 添加解析后的结构化数据
+        processed_variation['parsed_long_description'] = parsed_content
+        
+        # 保留原始HTML内容
+        processed_variation['longDescription_raw'] = long_description
+        
+        # 生成纯文本版本（去除HTML标签）
+        text_only = re.sub(r'<[^>]+>', '', long_description)
+        text_only = re.sub(r'\s+', ' ', text_only).strip()
+        processed_variation['longDescription_text'] = text_only
+    
+    return processed_variation
 
 @app.route('/api/health')
 def health_check():

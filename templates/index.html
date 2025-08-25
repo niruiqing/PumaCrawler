@@ -323,7 +323,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 默认示例URL
-        const defaultUrl = 'https://us.puma.com/us/en/pd/suede-xl-leopard-jr-youth/404299?swatch=02';
+        const defaultUrl = 'https://us.puma.com/us/en/pd/deviate-nitro-3-womens-running-shoes/309708?swatch=04';
         const urlInput = document.getElementById('productUrl');
         
         // 设置默认显示
@@ -487,6 +487,72 @@
             }
             
             // =================================================================
+            // 当前SKU信息
+            // =================================================================
+            if (product.current_variation && Object.keys(product.current_variation).length > 0) {
+                const variation = product.current_variation;
+                fullProductInfoText += '=== 当前SKU信息 ===\n';
+                if (variation.variantId) fullProductInfoText += `SKU ID: ${variation.variantId}\n`;
+                if (variation.name) fullProductInfoText += `SKU名称: ${variation.name}\n`;
+                if (variation.colorName) fullProductInfoText += `颜色名称: ${variation.colorName}\n`;
+                if (variation.colorValue) fullProductInfoText += `颜色代码: ${variation.colorValue}\n`;
+                if (variation.price) fullProductInfoText += `价格: ${variation.price}\n`;
+                if (variation.salePrice) fullProductInfoText += `销售价格: ${variation.salePrice}\n`;
+                if (variation.orderable !== undefined) fullProductInfoText += `可订购: ${variation.orderable ? 'true' : 'false'}\n`;
+                if (variation.styleNumber) fullProductInfoText += `款式编号: ${variation.styleNumber}\n`;
+                if (variation.ean) fullProductInfoText += `国际商品条码: ${variation.ean}\n`;
+                if (variation.isFinalSale !== undefined) fullProductInfoText += `最终销售: ${variation.isFinalSale ? 'true' : 'false'}\n`;
+                
+                // SKU预览图
+                if (variation.preview) {
+                    fullProductInfoText += `SKU预览图: ${variation.preview}\n`;
+                }
+                
+                // SKU图片
+                if (variation.images && variation.images.length > 0) {
+                    variation.images.forEach((imageUrl, imgIndex) => {
+                        if (imageUrl) {
+                            fullProductInfoText += `SKU图片${imgIndex + 1}: ${imageUrl}\n`;
+                        }
+                    });
+                }
+                
+                // SKU徽章
+                if (variation.badges && variation.badges.length > 0) {
+                    variation.badges.forEach((badge, badgeIndex) => {
+                        if (badge) {
+                            fullProductInfoText += `徽章${badgeIndex + 1}: ${badge}\n`;
+                        }
+                    });
+                }
+                
+                // 注意：原始HTML和纯文本的longDescription已移除，只保留解析后的结构化内容
+                
+                // 展示解析后的结构化内容
+                if (variation.parsed_long_description && Object.keys(variation.parsed_long_description).length > 0) {
+                    fullProductInfoText += `\n=== SKU详细产品故事 ===\n`;
+                    
+                    for (const [sectionTitle, sectionData] of Object.entries(variation.parsed_long_description)) {
+                        fullProductInfoText += `\n**${sectionTitle}**\n`;
+                        
+                        // 显示文本内容
+                        if (sectionData.text) {
+                            fullProductInfoText += `${sectionData.text}\n`;
+                        }
+                        
+                        // 显示列表项
+                        if (sectionData.list_items && sectionData.list_items.length > 0) {
+                            sectionData.list_items.forEach((item, index) => {
+                                fullProductInfoText += `  ${index + 1}. ${item}\n`;
+                            });
+                        }
+                    }
+                }
+                
+                fullProductInfoText += '\n';
+            }
+            
+            // =================================================================
             // 尺码信息
             // =================================================================
             if (product.sizes) {
@@ -549,7 +615,7 @@
                     if (group.sizes && group.sizes.length > 0) {
                         group.sizes.forEach((size, sizeIndex) => {
                             const orderable = size.orderable ? '可购买' : '不可购买';
-                            fullProductInfoText += `尺码${groupIndex + 1}-${sizeIndex + 1}: ${size.label} (${orderable}, 库存:${size.maxOrderableQuantity})\n`;
+                            fullProductInfoText += `尺码${groupIndex + 1}-${sizeIndex + 1}: ${size.label} (${orderable})\n`;
                         });
                     }
                 });
@@ -557,14 +623,32 @@
             }
             
             // =================================================================
-            // 图片信息
+            // 图片信息（分离主要图片和SKU图片）
             // =================================================================
-            let imagesHtml = '';
-            if (product.images && product.images.length > 0) {
+            
+            // 主要产品图片（不显示，避免与SKU图片重复）
+            // if (product.main_images && product.main_images.length > 0) {
+            //     fullProductInfoText += '=== 主要产品图片 ===\n';
+            //     product.main_images.forEach((imageUrl, index) => {
+            //         fullProductInfoText += `主要图片${index + 1}: ${imageUrl}\n`;
+            //     });
+            //     fullProductInfoText += '\n';
+            // }
+            
+            // 当前SKU图片（不显示，避免信息重复）
+            // if (product.sku_images && product.sku_images.length > 0) {
+            //     product.sku_images.forEach((imageUrl, index) => {
+            //         fullProductInfoText += `SKU图片${index + 1}: ${imageUrl}\n`;
+            //     });
+            // }
+            
+            // 如果没有分离的图片数据，使用原有的images字段（向后兼容）
+            if ((!product.main_images || product.main_images.length === 0) && 
+                (!product.sku_images || product.sku_images.length === 0) && 
+                product.images && product.images.length > 0) {
                 fullProductInfoText += '=== 图片链接 ===\n';
                 product.images.forEach((imageUrl, index) => {
                     fullProductInfoText += `图片${index + 1}: ${imageUrl}\n`;
-                    imagesHtml += `<div style="margin: 5px 0;">图片${index + 1}: <a href="${imageUrl}" target="_blank" style="color: #0066cc; text-decoration: underline;">${imageUrl}</a></div>`;
                 });
                 fullProductInfoText += '\n';
             }
@@ -635,40 +719,48 @@
             
 
             
-            // 显示完整商品信息（处理图片链接）
-            let displayText = fullProductInfoText;
-            if (imagesHtml) {
-                // 将图片链接部分替换为HTML格式
-                const imagesSectionRegex = /(=== 图片链接 ===\n[\s\S]*?(?=\n\n|\n=== |$))/;
-                if (imagesSectionRegex.test(displayText)) {
-                    displayText = displayText.replace(imagesSectionRegex, `=== 图片链接 ===\n${imagesHtml.replace(/<[^>]*>/g, '').replace(/image_\d+: /g, '').split('</div>').join('\n')}`);
-                }
-            }
             
             const productInfoElement = document.getElementById('fullProductInfo');
-            if (imagesHtml) {
-                // 使用HTML格式显示，保留图片链接的可点击性
-                let htmlContent = fullProductInfoText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                
-                // 将图片链接部分替换为HTML链接
-                const imagesSectionRegex = /(=== 图片链接 ===\n[\s\S]*?)(?=\n\n=== |\n\n其他信息|$)/;
-                if (imagesSectionRegex.test(htmlContent)) {
-                    const imagesSection = htmlContent.match(imagesSectionRegex)[1];
-                    let newImagesSection = '=== 图片链接 ===\n';
-                    
-                    if (product.images && product.images.length > 0) {
-                        product.images.forEach((imageUrl, index) => {
-                            newImagesSection += `图片${index + 1}: <a href="${imageUrl}" target="_blank" style="color: #0066cc; text-decoration: underline; word-break: break-all;">${imageUrl}</a>\n`;
-                        });
-                    }
-                    
-                    htmlContent = htmlContent.replace(imagesSectionRegex, newImagesSection);
-                }
-                
-                productInfoElement.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${htmlContent}</pre>`;
-            } else {
-                productInfoElement.innerHTML = `<pre>${fullProductInfoText}</pre>`;
-            }
+            
+            // 处理所有图片链接，让其可点击
+            let htmlContent = fullProductInfoText;
+            
+            // 转义HTML特殊字符，但保留我们要添加的链接
+            htmlContent = htmlContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // 处理图片URL，将其转换为可点击的链接
+            // 首先处理带编号的SKU图片（如SKU图片1、SKU图片2等）
+            const skuNumberedRegex = /(SKU图片[0-9]+:\s*)(https?:\/\/[^\s\n]+)/gi;
+            htmlContent = htmlContent.replace(skuNumberedRegex, (match, prefix, url) => {
+                const cleanUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return `${prefix}<a href="${cleanUrl}" target="_blank" style="color: #0066cc; text-decoration: underline; word-break: break-all; font-weight: normal;">${cleanUrl}</a>`;
+            });
+            
+            // 然后处理其他图片格式
+            const imageUrlRegex = /((?:主要图片|图片|SKU预览图)\d*:\s*)(https?:\/\/[^\s\n]+\.(?:jpg|jpeg|png|gif|webp|avif)[^\s\n]*)/gi;
+            htmlContent = htmlContent.replace(imageUrlRegex, (match, prefix, url) => {
+                // 恢复URL中的HTML转义字符
+                const cleanUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return `${prefix}<a href="${cleanUrl}" target="_blank" style="color: #0066cc; text-decoration: underline; word-break: break-all; font-weight: normal;">${cleanUrl}</a>`;
+            });
+            
+            // 处理SKU预览图
+            const previewImageRegex = /(SKU预览图:\s*)(https?:\/\/[^\s\n]+)/gi;
+            htmlContent = htmlContent.replace(previewImageRegex, (match, prefix, url) => {
+                const cleanUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return `${prefix}<a href="${cleanUrl}" target="_blank" style="color: #0066cc; text-decoration: underline; word-break: break-all; font-weight: normal;">${cleanUrl}</a>`;
+            });
+            
+            // 处理不带编号的SKU图片
+            const skuImageRegex = /(SKU图片:\s*)(https?:\/\/[^\s\n]+)/gi;
+            htmlContent = htmlContent.replace(skuImageRegex, (match, prefix, url) => {
+                const cleanUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return `${prefix}<a href="${cleanUrl}" target="_blank" style="color: #0066cc; text-decoration: underline; word-break: break-all; font-weight: normal;">${cleanUrl}</a>`;
+            });
+            
+            // 显示处理后的内容
+            productInfoElement.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${htmlContent}</pre>`;
+            
 
             
             // 显示产品区域

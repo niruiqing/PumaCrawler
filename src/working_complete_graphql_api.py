@@ -78,6 +78,11 @@ class CompleteProductInfo:
     product_division: str = ""
     ean: str = ""
     
+    # 变体信息
+    variant_id: str = ""
+    all_variations: List[Dict] = None
+    current_variation: Dict = None
+    
     # 元数据
     scraped_at: str = ""
     method: str = ""
@@ -92,6 +97,10 @@ class CompleteProductInfo:
             self.promotions = []
         if self.badges is None:
             self.badges = []
+        if self.all_variations is None:
+            self.all_variations = []
+        if self.current_variation is None:
+            self.current_variation = {}
 
 class WorkingCompleteGraphQLAPI:
     """工作的完整PUMA GraphQL API客户端"""
@@ -284,6 +293,35 @@ fragment pdpMandatoryExtraVariantFields on Variant {
         if match:
             return match.group(1)
         return ""
+    
+    def extract_swatch_from_url(self, url: str) -> str:
+        """从URL中提取swatch参数（颜色代码）"""
+        match = re.search(r'swatch=([^&]+)', url)
+        if match:
+            return match.group(1)
+        return ""
+    
+    def find_matching_variation(self, variations: list, swatch_code: str) -> dict:
+        """根据swatch代码找到匹配的变体"""
+        if not variations:
+            return {}
+        
+        # 如果没有swatch代码，返回第一个变体
+        if not swatch_code:
+            print(f"⚠️  URL中未找到swatch参数，使用第一个变体")
+            return variations[0]
+        
+        # 查找匹配的变体
+        for variation in variations:
+            color_value = variation.get('colorValue', '')
+            if color_value == swatch_code:
+                print(f"✅ 找到匹配的变体: colorValue={color_value}")
+                return variation
+        
+        # 如果没找到匹配的，返回第一个变体并发出警告
+        print(f"⚠️  未找到匹配swatch={swatch_code}的变体，使用第一个变体")
+        print(f"   可用的颜色代码: {[v.get('colorValue', 'N/A') for v in variations]}")
+        return variations[0]
         
     def get_complete_product_info(self, product_id: str, url: str = "") -> Optional[CompleteProductInfo]:
         """获取完整的商品信息（包括尺码）"""
@@ -391,8 +429,62 @@ fragment pdpMandatoryExtraVariantFields on Variant {
         # 处理变体信息（variations）
         variations = product_data.get('variations', [])
         if variations:
-            # 使用第一个变体的信息作为主要信息
-            main_variation = variations[0]
+            # 从URL中提取swatch参数
+            swatch_code = self.extract_swatch_from_url(url) if url else ""
+            
+            # 根据swatch参数选择对应的变体
+            main_variation = self.find_matching_variation(variations, swatch_code)
+            
+            print(f"🎨 选择的变体信息:")
+            print(f"   变体ID: {main_variation.get('variantId', 'N/A')}")
+            print(f"   颜色名称: {main_variation.get('colorName', 'N/A')}")
+            print(f"   颜色代码: {main_variation.get('colorValue', 'N/A')}")
+            
+            # 设置变体ID到基本信息中
+            product_info.variant_id = main_variation.get('variantId', '')
+            
+            # 收集所有变体信息供参考（但前端只显示当前选中的）
+            all_variations_info = []
+            for variation in variations:
+                # 获取产品故事信息
+                product_story = variation.get('productStory', {})
+                long_description = product_story.get('longDescription', '') if product_story else ''
+                
+                variation_info = {
+                    'variantId': variation.get('variantId', ''),
+                    'name': variation.get('name', ''),
+                    'colorName': variation.get('colorName', ''),
+                    'colorValue': variation.get('colorValue', ''),
+                    'price': variation.get('price', ''),
+                    'salePrice': variation.get('salePrice', ''),
+                    'orderable': variation.get('orderable', False),
+                    'styleNumber': variation.get('styleNumber', ''),
+                    'ean': variation.get('ean', ''),
+                    'preview': variation.get('preview', ''),
+                    'images': [img.get('href', '') for img in variation.get('images', []) if img.get('href')],
+                    'badges': [badge.get('label', '') for badge in variation.get('badges', []) if badge.get('label')],
+                    'isFinalSale': variation.get('isFinalSale', False),
+                    'longDescription': long_description,  # 添加长描述信息
+                    'productStory': product_story  # 添加完整的产品故事信息
+                }
+                all_variations_info.append(variation_info)
+            
+            # 保存所有变体信息（供调试和完整性参考）
+            product_info.all_variations = all_variations_info
+            
+            # 标记当前选中的变体
+            current_variation_info = None
+            for var_info in all_variations_info:
+                if var_info['colorValue'] == swatch_code or (not swatch_code and var_info == all_variations_info[0]):
+                    current_variation_info = var_info
+                    break
+            
+            # 如果没找到匹配的，使用第一个
+            if not current_variation_info and all_variations_info:
+                current_variation_info = all_variations_info[0]
+            
+            # 保存当前变体信息
+            product_info.current_variation = current_variation_info
             
             # 价格信息
             product_info.price = str(main_variation.get('price', ''))

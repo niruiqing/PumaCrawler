@@ -64,10 +64,16 @@ class ProductInfo:
     material_composition: List[str] = field(default_factory=list)
     care_instructions: List[str] = field(default_factory=list)
     
-    # 图片信息
-    images: List[str] = field(default_factory=list)
-    preview_image: str = ""
+    # 图片信息（分离主要图片和SKU变体图片）
+    images: List[str] = field(default_factory=list)  # 所有图片（向后兼容）
+    main_images: List[str] = field(default_factory=list)  # 主要产品图片
+    sku_images: List[str] = field(default_factory=list)  # 当前选中SKU的图片
+    preview_image: str = ""  # 预览图片
     vertical_images: List[str] = field(default_factory=list)
+    
+    # SKU信息（存储所有变体信息）
+    all_variations: List[Dict[str, Any]] = field(default_factory=list)  # 所有SKU信息
+    current_variation: Dict[str, Any] = field(default_factory=dict)  # 当前选中SKU
     
     # 尺码信息
     sizes: List[str] = field(default_factory=list)
@@ -669,6 +675,56 @@ fragment tokenPayload on TokenPayload {
             print(f"❌ 提取商品ID时发生错误: {e}")
             return None
     
+    def extract_swatch_from_url(self, url: str) -> str:
+        """从URL中提取swatch参数（颜色代码）"""
+        try:
+            match = re.search(r'swatch=([^&]+)', url)
+            if match:
+                swatch_code = match.group(1)
+                print(f"✅ 从URL提取到swatch参数: {swatch_code}")
+                return swatch_code
+            print(f"⚠️ URL中未找到swatch参数")
+            return ""
+        except Exception as e:
+            print(f"❌ 提取swatch参数时发生错误: {e}")
+            return ""
+    
+    def find_matching_variation(self, variations: list, swatch_code: str) -> dict:
+        """根据swatch代码找到匹配的变体"""
+        if not variations:
+            print(f"❌ 没有变体数据")
+            return {}
+        
+        print(f"🔍 开始匹配变体: swatch='{swatch_code}' (类型: {type(swatch_code)})")
+        print(f"   变体总数: {len(variations)}")
+        
+        # 如果没有swatch代码，返回第一个变体
+        if not swatch_code:
+            print(f"⚠️ 没有swatch参数，使用第一个变体")
+            return variations[0]
+        
+        # 显示所有变体的colorValue供对比
+        print(f"   所有变体的colorValue:")
+        for i, var in enumerate(variations):
+            cv = var.get('colorValue', 'N/A')
+            print(f"     {i+1}. colorValue='{cv}' (类型: {type(cv)})")
+        
+        # 查找匹配的变体
+        print(f"   开始逐一匹配...")
+        for i, variation in enumerate(variations):
+            color_value = variation.get('colorValue', '')
+            print(f"     比较 #{i+1}: '{color_value}' == '{swatch_code}' ? {color_value == swatch_code}")
+            if color_value == swatch_code:
+                print(f"✅ 找到匹配的变体: 位置={i+1}, colorValue={color_value}")
+                print(f"   匹配的变体信息: variantId={variation.get('variantId', 'N/A')}, name={variation.get('name', 'N/A')[:50]}...")
+                return variation
+        
+        # 如果没找到匹配的，返回第一个变体并发出警告
+        print(f"⚠️ 未找到匹配swatch={swatch_code}的变体，使用第一个变体")
+        available_colors = [v.get('colorValue', 'N/A') for v in variations]
+        print(f"   可用的颜色代码: {available_colors}")
+        return variations[0]
+    
     def scrape_product(self, url: str) -> Optional[ProductInfo]:
         """主要接口：爬取商品信息"""
         try:
@@ -680,7 +736,7 @@ fragment tokenPayload on TokenPayload {
                 return None
             
             # 获取基本商品信息
-            product_info = self.get_product_info(product_id)
+            product_info = self.get_product_info(product_id, url)
             if not product_info:
                 return None
             
@@ -689,7 +745,7 @@ fragment tokenPayload on TokenPayload {
             detailed_size_data = self.get_detailed_size_info(product_id)
             if detailed_size_data:
                 # 合并详细尺码信息到基本商品信息中
-                self._merge_detailed_size_info(product_info, detailed_size_data)
+                self._merge_detailed_size_info(product_info, detailed_size_data, url)
                 print(f"✅ 成功合并详细尺码信息")
             else:
                 print(f"⚠️ 无法获取详细尺码信息，使用基本信息")
@@ -808,7 +864,7 @@ fragment tokenPayload on TokenPayload {
             traceback.print_exc()
             return None
     
-    def get_product_info(self, product_id: str) -> Optional[ProductInfo]:
+    def get_product_info(self, product_id: str, url: str = "") -> Optional[ProductInfo]:
         try:
             print(f"🔍 正在获取商品信息，ID: {product_id}")
             
@@ -865,7 +921,7 @@ fragment tokenPayload on TokenPayload {
                                         if 'data' in retry_data and 'product' in retry_data['data'] and retry_data['data']['product']:
                                             product_data = retry_data['data']['product']
                                             print(f"✅ 重试成功！获取到商品数据: {product_data.get('name', 'Unknown')}")
-                                            return self._parse_product_data(product_data)
+                                            return self._parse_product_data(product_data, url)
                                         elif 'errors' in retry_data:
                                             print(f"❌ 重试后仍有错误: {retry_data['errors']}")
                                     else:
@@ -878,7 +934,7 @@ fragment tokenPayload on TokenPayload {
                     if 'data' in data and 'product' in data['data'] and data['data']['product']:
                         product_data = data['data']['product']
                         print(f"✅ 成功获取商品数据: {product_data.get('name', 'Unknown')}")
-                        return self._parse_product_data(product_data)
+                        return self._parse_product_data(product_data, url)
                     else:
                         print(f"❌ 响应数据中没有商品信息")
                         return None
@@ -898,7 +954,7 @@ fragment tokenPayload on TokenPayload {
             traceback.print_exc()
             return None
     
-    def _parse_product_data(self, product_data: Dict) -> ProductInfo:
+    def _parse_product_data(self, product_data: Dict, url: str = "") -> ProductInfo:
         """解析GraphQL响应数据为ProductInfo对象"""
         try:
             print(f"📋 开始解析商品数据...")
@@ -923,15 +979,28 @@ fragment tokenPayload on TokenPayload {
             product_info.disable_reviews = product_data.get('disableReviews')
             product_info.size_chart_id = product_data.get('sizeChartId', '')
             
-            # 处理主图片
+            # 处理主图片（产品级别）
             main_image = product_data.get('image', {})
             if main_image and main_image.get('href'):
                 product_info.preview_image = main_image['href']
-                product_info.images.append(main_image['href'])
+                product_info.main_images.append(main_image['href'])
+                product_info.images.append(main_image['href'])  # 向后兼容
                 if main_image.get('verticalImageHref'):
                     product_info.vertical_images.append(main_image['verticalImageHref'])
             
-            # 处理颜色信息
+            # 处理产品级别的颜色图片
+            colors = product_data.get('colors', [])
+            for color in colors:
+                color_image = color.get('image', {})
+                if color_image and color_image.get('href'):
+                    if color_image['href'] not in product_info.main_images:
+                        product_info.main_images.append(color_image['href'])
+                        product_info.images.append(color_image['href'])  # 向后兼容
+                    if color_image.get('verticalImageHref'):
+                        if color_image['verticalImageHref'] not in product_info.vertical_images:
+                            product_info.vertical_images.append(color_image['verticalImageHref'])
+            
+            # 处理颜色信息（从产品级别获取）
             colors = product_data.get('colors', [])
             if colors:
                 first_color = colors[0]
@@ -943,7 +1012,58 @@ fragment tokenPayload on TokenPayload {
             # 处理变体信息
             variations = product_data.get('variations', [])
             if variations:
-                first_variant = variations[0]
+                # 从URL中提取swatch参数
+                swatch_code = self.extract_swatch_from_url(url) if url else ""
+                
+                # 存储所有变体信息（SKU信息）
+                all_variations_info = []
+                for variation in variations:
+                    # 获取产品故事信息
+                    product_story = variation.get('productStory', {})
+                    long_description = product_story.get('longDescription', '') if product_story else ''
+                    
+                    variation_info = {
+                        'id': variation.get('id', ''),
+                        'masterId': variation.get('masterId', ''),
+                        'variantId': variation.get('variantId', ''),
+                        'name': variation.get('name', ''),
+                        'price': variation.get('price', ''),
+                        'salePrice': variation.get('salePrice', ''),
+                        'colorValue': variation.get('colorValue', ''),
+                        'colorName': variation.get('colorName', ''),
+                        'styleNumber': variation.get('styleNumber', ''),
+                        'ean': variation.get('ean', ''),
+                        'preview': variation.get('preview', ''),
+                        'orderable': variation.get('orderable', False),
+                        'isFinalSale': variation.get('isFinalSale', False),
+                        'validUntil': variation.get('validUntil', ''),
+                        'isAppExclusive': variation.get('isAppExclusive', False),
+                        'images': [img.get('href', '') for img in variation.get('images', []) if img.get('href')],
+                        'verticalImages': [img.get('verticalImageHref', '') for img in variation.get('images', []) if img.get('verticalImageHref')],
+                        'badges': [badge.get('label', '') for badge in variation.get('badges', []) if badge.get('label')],
+                        'materialComposition': variation.get('materialComposition', []),
+                        'manufacturerInfo': variation.get('manufacturerInfo', {}),
+                        'longDescription': long_description,  # 添加长描述信息
+                        'productStory': product_story  # 添加完整的产品故事信息
+                    }
+                    all_variations_info.append(variation_info)
+                
+                product_info.all_variations = all_variations_info
+                
+                # 根据swatch参数选择对应的变体
+                first_variant = self.find_matching_variation(variations, swatch_code)
+                
+                # 设置当前选中的变体信息
+                for var_info in all_variations_info:
+                    if var_info['variantId'] == first_variant.get('variantId', '') or \
+                       var_info['id'] == first_variant.get('id', ''):
+                        product_info.current_variation = var_info
+                        break
+                
+                print(f"🎨 选择的变体信息:")
+                print(f"   变体ID: {first_variant.get('variantId', 'N/A')}")
+                print(f"   颜色名称: {first_variant.get('colorName', 'N/A')}")
+                print(f"   颜色代码: {first_variant.get('colorValue', 'N/A')}")
                 
                 # 更新基本信息
                 product_info.variant_id = first_variant.get('variantId', '')
@@ -969,12 +1089,11 @@ fragment tokenPayload on TokenPayload {
                 if product_info.original_price > 0 and product_info.sale_price > 0:
                     product_info.discount = ((product_info.original_price - product_info.sale_price) / product_info.original_price) * 100
                 
-                # 颜色信息（从变体获取）
-                if not product_info.color:
-                    product_info.color_name = first_variant.get('colorName', '')
-                    product_info.color_value = first_variant.get('colorValue', '')
-                    product_info.color = first_variant.get('colorName', '')
-                    product_info.color_code = first_variant.get('colorValue', '')
+                # 颜色信息（从变体获取，覆盖之前的设置以确保准确性）
+                product_info.color_name = first_variant.get('colorName', '')
+                product_info.color_value = first_variant.get('colorValue', '')
+                product_info.color = first_variant.get('colorName', '')
+                product_info.color_code = first_variant.get('colorValue', '')
                 
                 # 状态信息
                 product_info.orderable = first_variant.get('orderable', True)
@@ -1005,17 +1124,31 @@ fragment tokenPayload on TokenPayload {
                         elif isinstance(content, str):
                             product_info.country_of_origin = content
                 
-                # 处理图片（从变体获取）
+                # 处理SKU变体图片（从当前选中的变体获取）
                 variant_images = first_variant.get('images', [])
                 for img in variant_images:
-                    if img.get('href') and img['href'] not in product_info.images:
-                        product_info.images.append(img['href'])
-                    if img.get('verticalImageHref') and img['verticalImageHref'] not in product_info.vertical_images:
-                        product_info.vertical_images.append(img['verticalImageHref'])
+                    if img.get('href'):
+                        # 添加到SKU图片列表
+                        if img['href'] not in product_info.sku_images:
+                            product_info.sku_images.append(img['href'])
+                        # 也添加到综合图片列表（向后兼容）
+                        if img['href'] not in product_info.images:
+                            product_info.images.append(img['href'])
+                    
+                    if img.get('verticalImageHref'):
+                        if img['verticalImageHref'] not in product_info.vertical_images:
+                            product_info.vertical_images.append(img['verticalImageHref'])
                 
-                # 预览图片
-                if first_variant.get('preview') and not product_info.preview_image:
-                    product_info.preview_image = first_variant['preview']
+                # 处理SKU预览图片
+                if first_variant.get('preview'):
+                    if not product_info.preview_image:  # 优先使用主产品预览图
+                        product_info.preview_image = first_variant['preview']
+                    # 添加到SKU图片列表
+                    if first_variant['preview'] not in product_info.sku_images:
+                        product_info.sku_images.append(first_variant['preview'])
+                    # 也添加到综合图片列表（向后兼容）
+                    if first_variant['preview'] not in product_info.images:
+                        product_info.images.append(first_variant['preview'])
             
             product_info.availability = "有库存"
             product_info.stock_status = "available"
@@ -1029,7 +1162,7 @@ fragment tokenPayload on TokenPayload {
             traceback.print_exc()
             return None
     
-    def _merge_detailed_size_info(self, product_info: ProductInfo, detailed_data: Dict) -> None:
+    def _merge_detailed_size_info(self, product_info: ProductInfo, detailed_data: Dict, url: str = "") -> None:
         """合并详细尺码信息到ProductInfo对象中"""
         try:
             print(f"🔄 开始合并详细尺码信息...")
@@ -1052,7 +1185,58 @@ fragment tokenPayload on TokenPayload {
             # 处理变体详细信息
             variations = detailed_data.get('variations', [])
             if variations:
-                first_variant = variations[0]
+                # ⚠️ 注意：LazyPDP API的variations数据结构与主PDP不同，colorValue可能为空
+                # 因此我们不重新选择变体，而是找到与当前product_info匹配的变体
+                
+                # 调试：显示所有详细变体的ID信息
+                print(f"🔍 详细变体数据结构分析:")
+                for i, var in enumerate(variations[:5]):  # 只显示前5个
+                    print(f"   变体#{i+1}: id='{var.get('id', 'N/A')}', variantId='{var.get('variantId', 'N/A')}', colorValue='{var.get('colorValue', 'N/A')}'")
+                if len(variations) > 5:
+                    print(f"   ...及其他{len(variations) - 5}个变体")
+                
+                # 优先使用当前已选择的变体ID进行匹配
+                first_variant = None
+                current_variant_id = product_info.variant_id
+                current_sku = product_info.sku
+                
+                print(f"🔍 当前已选择的变体信息:")
+                print(f"   variant_id: '{current_variant_id}'")
+                print(f"   sku: '{current_sku}'")
+                
+                if current_variant_id:
+                    # 根据当前的variantId查找对应的详细变体数据
+                    for variation in variations:
+                        if variation.get('variantId') == current_variant_id:
+                            first_variant = variation
+                            print(f"🎯 根据variantId匹配到详细变体: {current_variant_id}")
+                            break
+                
+                # 如果根据variantId没找到，尝试根据变体ID（id字段）匹配
+                if not first_variant and current_sku:
+                    for variation in variations:
+                        if variation.get('id') == current_sku:
+                            first_variant = variation
+                            print(f"🎯 根据变体ID匹配到详细变体: {current_sku}")
+                            break
+                
+                # 如果都没找到，尝试根据颜色代码匹配
+                if not first_variant and product_info.color_value:
+                    for variation in variations:
+                        if variation.get('colorValue') == product_info.color_value:
+                            first_variant = variation
+                            print(f"🎯 根据颜色代码匹配到详细变体: {product_info.color_value}")
+                            break
+                
+                # 如果都没找到，使用第一个变体（保持原逻辑作为兜底）
+                if not first_variant:
+                    first_variant = variations[0]
+                    print(f"⚠️ 未找到匹配的变体，使用第一个变体作为兜底")
+                
+                print(f"🎨 合并详细信息中的选中变体:")
+                print(f"   变体ID: {first_variant.get('id', 'N/A')}")
+                print(f"   variantId: {first_variant.get('variantId', 'N/A')}")
+                print(f"   颜色代码: {first_variant.get('colorValue', 'N/A')}")
                 
                 # 处理尺码组信息
                 size_groups = first_variant.get('sizeGroups', [])
@@ -1089,6 +1273,13 @@ fragment tokenPayload on TokenPayload {
                     if product_story.get('longDescription') and not product_info.description:
                         product_info.description = product_story['longDescription']
                         print(f"✅ 更新商品详细描述")
+                    
+                    # 更新current_variation中的longDescription信息
+                    long_description = product_story.get('longDescription', '')
+                    if long_description and hasattr(product_info, 'current_variation') and product_info.current_variation:
+                        product_info.current_variation['longDescription'] = long_description
+                        product_info.current_variation['productStory'] = product_story
+                        print(f"✅ 更新current_variation的长描述信息")
                     
                     # 更新材料组成
                     material_composition = product_story.get('materialComposition', [])

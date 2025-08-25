@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKU图片链接处理调试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .before {
+            background-color: #fff3cd;
+        }
+        .after {
+            background-color: #d1ecf1;
+        }
+        .debug {
+            background-color: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+        .console-log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h2>SKU图片链接处理调试工具</h2>
+        
+        <div class="test-section before">
+            <h3>原始测试数据：</h3>
+            <pre id="originalData"></pre>
+        </div>
+        
+        <div class="test-section debug">
+            <h3>调试信息：</h3>
+            <div class="console-log" id="debugOutput"></div>
+        </div>
+        
+        <div class="test-section after">
+            <h3>处理后结果：</h3>
+            <div id="processedResult"></div>
+        </div>
+        
+        <button onclick="runDebugTest()" style="margin-top: 15px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">运行调试测试</button>
+    </div>
+
+    <script>
+        function log(message) {
+            const debugOutput = document.getElementById('debugOutput');
+            debugOutput.innerHTML += message + '<br>';
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+        }
+        
+        function runDebugTest() {
+            // 清空调试输出
+            document.getElementById('debugOutput').innerHTML = '';
+            
+            // 模拟真实的SKU图片数据
+            const testData = `=== 当前SKU信息 ===
+SKU ID: 309708-04
+SKU名称: DEVIATE NITRO 3 Women's Running Shoes
+颜色名称: Puma White-Puma Black
+SKU预览图: https://images.puma.com/image/upload/t_PDP_1728_v1/f_auto,q_auto,b_rgb:fafafa/global/309708/04/sv01/fmtpng/DEVIATE-NITRO-3-Women's-Running-Shoes.png
+SKU图片1: https://images.puma.com/image/upload/t_PDP_1728_v1/f_auto,q_auto,b_rgb:fafafa/global/309708/04/mod01/fmtpng/DEVIATE-NITRO-3-Women's-Running-Shoes.png
+SKU图片2: https://images.puma.com/image/upload/t_PDP_1728_v1/f_auto,q_auto,b_rgb:fafafa/global/309708/04/mod02/fmtpng/DEVIATE-NITRO-3-Women's-Running-Shoes.png
+SKU图片3: https://images.puma.com/image/upload/t_PDP_1728_v1/f_auto,q_auto,b_rgb:fafafa/global/309708/04/mod03/fmtpng/DEVIATE-NITRO-3-Women's-Running-Shoes.png
+徽章1: NEW
+价格: $140.00`;
+
+            log('=== 开始调试测试 ===');
+            
+            // 显示原始数据
+            document.getElementById('originalData').textContent = testData;
+            log('原始数据已设置');
+            
+            // 开始处理
+            let htmlContent = testData;
+            log('开始处理HTML内容');
+            
+            // 转义HTML特殊字符
+            htmlContent = htmlContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            log('HTML特殊字符已转义');
+            
+            // 测试不同的正则表达式
+            log('=== 测试正则表达式匹配 ===');
+            
+            // 方案1：原有的正则表达式
+            const regex1 = /((?:主要图片|SKU图片|图片|SKU预览图)\\d*:\\s*)(https?:\\/\\/[^\\s\\n]+\\.(?:jpg|jpeg|png|gif|webp|avif)[^\\s\\n]*)/gi;
+            log('正则表达式1: ' + regex1.source);
+            
+            const matches1 = [...htmlContent.matchAll(regex1)];
+            log('正则表达式1匹配结果数量: ' + matches1.length);
+            matches1.forEach((match, index) => {
+                log(`  匹配${index + 1}: 完整匹配="${match[0]}", 前缀="${match[1]}", URL="${match[2]}"`);
+            });
+            
+            // 方案2：专门针对SKU图片的正则表达式
+            const regex2 = /(SKU图片\\d+:\\s*)(https?:\\/\\/[^\\s\\n]+)/gi;
+            log('正则表达式2 (专门针对SKU图片): ' + regex2.source);
+            
+            const matches2 = [...htmlContent.matchAll(regex2)];
+            log('正则表达式2匹配结果数量: ' + matches2.length);
+            matches2.forEach((match, index) => {
+                log(`  匹配${index + 1}: 完整匹配="${match[0]}", 前缀="${match[1]}", URL="${match[2]}"`);
+            });
+            
+            // 方案3：更宽松的匹配
+            const regex3 = /(SKU图片[0-9]+:\\s*)(https?:\\/\\/[^\\s\\n]+)/gi;
+            log('正则表达式3 (更宽松): ' + regex3.source);
+            
+            const matches3 = [...htmlContent.matchAll(regex3)];
+            log('正则表达式3匹配结果数量: ' + matches3.length);
+            matches3.forEach((match, index) => {
+                log(`  匹配${index + 1}: 完整匹配="${match[0]}", 前缀="${match[1]}", URL="${match[2]}"`);
+            });
+            
+            // 使用最有效的正则表达式进行替换
+            log('=== 开始替换处理 ===');
+            
+            let processedContent = htmlContent;
+            
+            // 首先处理带编号的SKU图片
+            const skuRegex = /(SKU图片[0-9]+:\\s*)(https?:\\/\\/[^\\s\\n]+)/gi;
+            let skuMatches = 0;
+            processedContent = processedContent.replace(skuRegex, (match, prefix, url) => {
+                skuMatches++;
+                log(`替换SKU图片 ${skuMatches}: ${prefix} -> 链接化`);
+                const cleanUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return `${prefix}<a href="${cleanUrl}" target="_blank" style="color: #0066cc; text-decoration: underline; word-break: break-all; font-weight: normal;">${cleanUrl}</a>`;
+            });
+            
+            // 处理SKU预览图
+            const previewRegex = /(SKU预览图:\\s*)(https?:\\/\\/[^\\s\\n]+)/gi;
+            let previewMatches = 0;
+            processedContent = processedContent.replace(previewRegex, (match, prefix, url) => {
+                previewMatches++;
+                log(`替换SKU预览图 ${previewMatches}: ${prefix} -> 链接化`);
+                const cleanUrl = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return `${prefix}<a href="${cleanUrl}" target="_blank" style="color: #0066cc; text-decoration: underline; word-break: break-all; font-weight: normal;">${cleanUrl}</a>`;
+            });
+            
+            log(`总共处理了 ${skuMatches} 个SKU图片和 ${previewMatches} 个预览图`);
+            log('=== 处理完成 ===');
+            
+            // 显示最终结果
+            document.getElementById('processedResult').innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;">${processedContent}</pre>`;
+            
+            log('结果已显示，请检查SKU图片是否变成了可点击链接');
+        }
+        
+        // 页面加载时自动运行测试
+        window.onload = runDebugTest;
+    </script>
+</body>
+</html>
