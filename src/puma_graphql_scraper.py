@@ -11,6 +11,7 @@ from dataclasses import dataclass, asdict
 from typing import List, Optional, Dict
 import re
 from datetime import datetime
+from config import get_output_path
 
 @dataclass
 class GraphQLProductInfo:
@@ -71,21 +72,21 @@ class PumaGraphQLScraper:
     
     def __init__(self):
         self.session = requests.Session()
+        # 使用简化的请求头以避免 locale 错误
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en',  # 简化语言设置
             'Content-Type': 'application/json',
             'Origin': 'https://us.puma.com',
             'Referer': 'https://us.puma.com/',
-            'sec-ch-ua': '"Google Chrome";v="119", "Chromium";v="119", "Not?A_Brand";v="24"',
+            'sec-ch-ua': '"Google Chrome";v="139", "Chromium";v="139", "Not?A_Brand";v="24"',
             'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"',
+            'sec-ch-ua-platform': '"Windows"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-origin',
-            'Cache-Control': 'no-cache',
+            'X-Graphql-Client-Name': 'nitro-fe'
         })
         
         self.graphql_url = "https://us.puma.com/api/graphql"
@@ -195,6 +196,12 @@ class PumaGraphQLScraper:
             if response.status_code != 200:
                 print(f"❌ GraphQL API 错误: {response.status_code}")
                 print(f"   响应内容: {response.text}")
+                
+                # 检查是否是500错误且包含locale错误
+                if response.status_code == 500 and 'locale' in response.text.lower():
+                    print(f"🔄 检测到500 locale错误，尝试备用查询...")
+                    return self._try_alternative_query(product_id)
+                
                 return None
             
             try:
@@ -207,9 +214,14 @@ class PumaGraphQLScraper:
             if 'errors' in data:
                 print(f"❌ GraphQL 查询错误: {data['errors']}")
                 
-                # 尝试不同的查询方式
-                print(f"🔄 尝试简化查询...")
-                return self._try_alternative_query(product_id)
+                # 检查是否是locale错误
+                error_msg = str(data['errors'])
+                if 'locale' in error_msg.lower() or 'unsupported' in error_msg.lower():
+                    print(f"🔄 检测到locale错误，尝试备用查询方法...")
+                    return self._try_alternative_query(product_id)
+                else:
+                    print(f"🔄 尝试简化查询...")
+                    return self._try_alternative_query(product_id)
             
             if 'data' in data and data['data'] and data['data'].get('product'):
                 print("✅ GraphQL API 查询成功")
@@ -341,15 +353,34 @@ class PumaGraphQLScraper:
                 print(f"   ❓ 未知尺码组 '{group_label}': {len(sizes_data)} 个尺码")
     
     def _try_alternative_query(self, product_id: str) -> Optional[Dict]:
-        """尝试备用查询方法，包括不同locale设置"""
+        """尝试备用查询方法，解决locale错误"""
         print(f"🔄 尝试备用GraphQL查询方法...")
         
-        # 尝试不同的locale设置
-        locale_variations = [
-            {'Accept-Language': 'en-US,en;q=0.9'},
-            {'Accept-Language': 'en'},
-            {'Accept-Language': 'en-US'},
-            {},  # 不设置Accept-Language
+        # 多种不同的请求头配置，避免可能导致locale错误的头
+        alternative_headers = [
+            # 配置1: 最简化的请求头
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            # 配置2: 添加基本的头但不包含Locale相关
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Accept-Language': 'en',
+                'Origin': 'https://us.puma.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            # 配置3: 添加GraphQL相关头
+            {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Accept-Language': 'en',
+                'Origin': 'https://us.puma.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'X-Graphql-Client-Name': 'nitro-fe'
+            }
         ]
         
         # 更简单的查询
@@ -380,15 +411,8 @@ class PumaGraphQLScraper:
         }
         """
         
-        for i, lang_headers in enumerate(locale_variations, 1):
-            print(f"   尝试 #{i}: {lang_headers if lang_headers else '无Accept-Language'}")
-            
-            # 更新请求头
-            original_headers = self.session.headers.copy()
-            if lang_headers:
-                self.session.headers.update(lang_headers)
-            elif 'Accept-Language' in self.session.headers:
-                del self.session.headers['Accept-Language']
+        for i, headers in enumerate(alternative_headers, 1):
+            print(f"   尝试 #{i}: 使用简化配置")
             
             payload = {
                 "operationName": "GetProduct",
@@ -397,8 +421,10 @@ class PumaGraphQLScraper:
             }
             
             try:
-                response = self.session.post(
+                # 使用requests直接发送请求，避免session的干扰
+                response = requests.post(
                     self.graphql_url,
+                    headers=headers,
                     json=payload,
                     timeout=30
                 )
@@ -411,15 +437,16 @@ class PumaGraphQLScraper:
                         print(f"   ✅ 备用查询 #{i} 成功")
                         return data['data']
                     elif 'errors' in data:
-                        print(f"      错误: {data['errors'][0].get('message', '')}")
+                        error_msg = str(data['errors'])
+                        print(f"      GraphQL错误: {error_msg[:100]}...")
+                        if 'locale' not in error_msg.lower():
+                            continue
                 else:
+                    print(f"      HTTP错误: {response.status_code}")
                     print(f"      响应内容: {response.text[:200]}")
-                
+                    
             except Exception as e:
-                print(f"      异常: {e}")
-            finally:
-                # 恢复原始请求头
-                self.session.headers = original_headers
+                print(f"      请求异常: {e}")
         
         print(f"   ❌ 所有备用查询都失败")
         return None
@@ -449,9 +476,10 @@ class PumaGraphQLScraper:
     def save_to_json(self, product_info: GraphQLProductInfo, filename: str = "graphql_product_info.json"):
         """保存商品信息到JSON文件"""
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            output_path = get_output_path(filename)
+            with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(asdict(product_info), f, ensure_ascii=False, indent=2)
-            print(f"✅ GraphQL数据已保存到: {filename}")
+            print(f"✅ GraphQL数据已保存到: {output_path}")
         except Exception as e:
             print(f"❌ 保存文件时出错: {e}")
 

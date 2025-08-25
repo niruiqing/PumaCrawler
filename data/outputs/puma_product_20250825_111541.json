@@ -1,0 +1,24 @@
+{
+  "name": "Suede XL Leopard",
+  "price": 65,
+  "original_price": "",
+  "description": "This new and bold take on our classic Suede sneakers has been making waves and establishing its own identity in the street style scene. The Suede XL has recently become a favorite as a skate shoe, just like the iconic Suede Classic did in the '90s. Combining the original's durability with a sturdier midsole and padded upper, the XL is loved by skaters both on and off the board.",
+  "color": "",
+  "sizes": [],
+  "images": [
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/404299/02/sv01/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/404299/02/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/404299/02/bv/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/404299/02/sv02/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/404299/02/sv03/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/404299/02/sv04/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth"
+  ],
+  "product_id": "404299",
+  "availability": "",
+  "rating": "",
+  "reviews_count": "",
+  "features": [],
+  "url": "https://us.puma.com/us/en/pd/suede-xl-leopard-jr-youth/404299?swatch=02",
+  "scraped_at": "2025-08-25T11:15:36.640681",
+  "method": "requests"
+}

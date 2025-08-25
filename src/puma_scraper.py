@@ -22,26 +22,59 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProductInfo:
     """商品信息数据类"""
+    header: str = ""     # 新增：商品主标题
+    sub_header: str = "" # 新增：商品副标题
     name: str = ""
     price: str = ""
     original_price: str = ""
+    sale_price: str = ""  # 新增：销售价格
+    discount: str = ""    # 新增：折扣信息
     description: str = ""
     color: str = ""
+    color_code: str = ""  # 新增：颜色代码
     sizes: List[str] = None
+    available_sizes: List[str] = None  # 新增：可用尺码
+    unavailable_sizes: List[str] = None  # 新增：缺货尺码
     images: List[str] = None
     product_id: str = ""
+    sku: str = ""         # 新增：SKU
+    brand: str = "PUMA"   # 新增：品牌
+    category: str = ""    # 新增：分类
+    subcategory: str = "" # 新增：子分类
     availability: str = ""
+    stock_status: str = "" # 新增：详细库存状态
     rating: str = ""
     reviews_count: str = ""
     features: List[str] = None
+    materials: List[str] = None      # 新增：材料信息
+    care_instructions: List[str] = None  # 新增：护理说明
+    size_guide: str = ""             # 新增：尺码指南链接
+    tech_specs: Dict[str, str] = None # 新增：技术规格
+    badges: List[str] = None         # 新增：商品徽章（如"新品"、"热销"等）
+    promotion: str = ""              # 新增：促销信息
+    gender: str = ""                 # 新增：性别分类
+    age_group: str = ""              # 新增：年龄组（成人/儿童等）
+    style_number: str = ""           # 新增：款式编号
     
     def __post_init__(self):
         if self.sizes is None:
             self.sizes = []
+        if self.available_sizes is None:
+            self.available_sizes = []
+        if self.unavailable_sizes is None:
+            self.unavailable_sizes = []
         if self.images is None:
             self.images = []
         if self.features is None:
             self.features = []
+        if self.materials is None:
+            self.materials = []
+        if self.care_instructions is None:
+            self.care_instructions = []
+        if self.tech_specs is None:
+            self.tech_specs = {}
+        if self.badges is None:
+            self.badges = []
 
 class PumaScraper:
     """Puma商品爬虫类"""
@@ -121,6 +154,56 @@ class PumaScraper:
         product = ProductInfo()
         
         try:
+            # 商品Header和Sub Header - 新增
+            header_selectors = [
+                'h1[data-testid="product-name"]',
+                'h1[data-testid="product-title"]',
+                'h1.product-name',
+                'h1.pdp-product-name',
+                '.product-title h1',
+                'h1[class*="product-name"]',
+                'h1[class*="ProductName"]',
+                'h1[class*="name"]',
+                'h1[class*="title"]',
+                '.pdp h1',
+                'h1',
+            ]
+            product.header = self._find_text_by_selectors(soup, header_selectors)
+            
+            # Sub Header 通常在h2或产品描述的第一段
+            sub_header_selectors = [
+                'h2[data-testid="product-description"]',
+                'h2[data-testid="product-subtitle"]',
+                '.product-subtitle',
+                '.product-description h2',
+                '.pdp-description h2',
+                'h2[class*="subtitle"]',
+                'h2[class*="description"]',
+                '.product-tagline',
+                '.product-summary',
+                'h2',
+            ]
+            product.sub_header = self._find_text_by_selectors(soup, sub_header_selectors)
+            
+            # 如果没有找到sub_header，尝试从描述的第一句获取
+            if not product.sub_header:
+                desc_selectors = [
+                    '.product-description p:first-child',
+                    '.pdp-description p:first-child',
+                    '.product-details p:first-child',
+                    '.description p:first-child',
+                ]
+                desc_text = self._find_text_by_selectors(soup, desc_selectors)
+                if desc_text and len(desc_text) < 200:  # 只当做副标题如果不太长
+                    product.sub_header = desc_text
+            
+            # 从 JSON 数据中获取 header 和 sub_header
+            if json_data:
+                if not product.header:
+                    product.header = json_data.get('name', '') or json_data.get('header', '')
+                if not product.sub_header:
+                    product.sub_header = json_data.get('subHeader', '') or json_data.get('description', '')[:200] if json_data.get('description') else ''
+            
             # 商品名称 - 更多选择器
             name_selectors = [
                 'h1[data-testid="product-name"]',
@@ -386,6 +469,171 @@ class PumaScraper:
                 if feature_text and len(feature_text) > 3:
                     product.features.append(feature_text)
             
+            # 新增：提取材料信息
+            material_selectors = [
+                '.material-composition',
+                '.materials',
+                '.product-materials',
+                '[data-testid="materials"]',
+                '[class*="material"]',
+                '.fabric-details',
+                '.composition'
+            ]
+            material_elements = soup.select(','.join(material_selectors))
+            for element in material_elements:
+                material_text = element.get_text(strip=True)
+                if material_text and len(material_text) > 3:
+                    # 分割材料信息（通常用逗号或分号分隔）
+                    materials = re.split(r'[,;]', material_text)
+                    for material in materials:
+                        material = material.strip()
+                        if material and material not in product.materials:
+                            product.materials.append(material)
+            
+            # 新增：提取护理说明
+            care_selectors = [
+                '.care-instructions',
+                '.care-guide',
+                '.washing-instructions',
+                '[data-testid="care"]',
+                '[class*="care"]',
+                '.product-care'
+            ]
+            care_elements = soup.select(','.join(care_selectors))
+            for element in care_elements:
+                care_text = element.get_text(strip=True)
+                if care_text and len(care_text) > 3:
+                    product.care_instructions.append(care_text)
+            
+            # 新增：提取技术规格
+            spec_selectors = [
+                '.tech-specs',
+                '.specifications',
+                '.product-specs',
+                '.technical-details',
+                '[data-testid="specs"]'
+            ]
+            spec_elements = soup.select(','.join(spec_selectors))
+            for element in spec_elements:
+                # 查找规格项目
+                spec_items = element.find_all(['dt', 'dd', 'li', 'tr'])
+                current_key = None
+                for item in spec_items:
+                    text = item.get_text(strip=True)
+                    if item.name in ['dt', 'th'] or ':' in text:
+                        # 这是规格名称
+                        current_key = text.replace(':', '').strip()
+                    elif current_key and item.name in ['dd', 'td']:
+                        # 这是规格值
+                        product.tech_specs[current_key] = text
+                        current_key = None
+            
+            # 新增：从URL和标题提取性别、年龄组信息
+            page_title = soup.find('title')
+            canonical_url = soup.find('link', rel='canonical')
+            text_to_analyze = ""
+            
+            if page_title:
+                text_to_analyze += page_title.get_text().lower() + " "
+            if canonical_url:
+                text_to_analyze += canonical_url.get('href', '').lower() + " "
+            if product.name:
+                text_to_analyze += product.name.lower()
+            
+            # 性别判断
+            if 'men' in text_to_analyze and 'women' not in text_to_analyze:
+                product.gender = '男性'
+            elif 'women' in text_to_analyze and 'men' not in text_to_analyze:
+                product.gender = '女性'
+            elif 'unisex' in text_to_analyze or 'uni' in text_to_analyze:
+                product.gender = '中性'
+            
+            # 年龄组判断
+            if any(word in text_to_analyze for word in ['kid', 'youth', 'junior', 'jr']):
+                product.age_group = '儿童/青少年'
+            elif any(word in text_to_analyze for word in ['baby', 'infant', 'toddler']):
+                product.age_group = '婴儿'
+            else:
+                product.age_group = '成人'
+            
+            # 新增：提取商品徽章
+            badge_selectors = [
+                '.product-badge',
+                '.badge',
+                '.label',
+                '[data-testid="badge"]',
+                '[class*="badge"]',
+                '[class*="label"]',
+                '.new-arrival',
+                '.bestseller',
+                '.limited-edition',
+                '.sale-badge',
+                '.promotion-badge'
+            ]
+            badge_elements = soup.select(','.join(badge_selectors))
+            for badge in badge_elements:
+                badge_text = badge.get_text(strip=True)
+                if badge_text and len(badge_text) < 20 and badge_text not in product.badges:
+                    product.badges.append(badge_text)
+            
+            # 新增：提取促销信息
+            promotion_selectors = [
+                '.promotion-message',
+                '.promo-text',
+                '.offer-text',
+                '[data-testid="promotion"]',
+                '[class*="promotion"]',
+                '[class*="offer"]',
+                '.sale-message',
+                '.discount-message'
+            ]
+            product.promotion = self._find_text_by_selectors(soup, promotion_selectors)
+            
+            # 新增：提取销售价格和折扣信息
+            sale_price_selectors = [
+                '.sale-price',
+                '.promo-price',
+                '.discount-price',
+                '[data-testid="sale-price"]',
+                '[class*="sale"][class*="price"]',
+                '.special-price'
+            ]
+            product.sale_price = self._find_text_by_selectors(soup, sale_price_selectors)
+            
+            discount_selectors = [
+                '.discount-percentage',
+                '.save-amount',
+                '.discount-amount',
+                '[data-testid="discount"]',
+                '[class*="discount"][class*="percentage"]',
+                '.savings'
+            ]
+            product.discount = self._find_text_by_selectors(soup, discount_selectors)
+            
+            # 新增：提取颜色代码
+            if not product.color_code:
+                try:
+                    canonical_url = soup.find('link', rel='canonical')
+                    if canonical_url:
+                        href = canonical_url.get('href', '')
+                        if 'swatch=' in href:
+                            product.color_code = href.split('swatch=')[1].split('&')[0]
+                except:
+                    pass
+            
+            # 新增：尺码可用性检查
+            if product.sizes:
+                for size in product.sizes[:]:
+                    if '(缺货)' in size or 'sold out' in size.lower():
+                        clean_size = size.replace('(缺货)', '').replace('(Sold Out)', '').strip()
+                        if clean_size not in product.unavailable_sizes:
+                            product.unavailable_sizes.append(clean_size)
+                        if size in product.sizes:
+                            product.sizes.remove(size)
+                    else:
+                        if size not in product.available_sizes:
+                            product.available_sizes.append(size)
+            
             logger.info(f"成功解析商品信息: {product.name}")
             
         except Exception as e:
@@ -436,9 +684,10 @@ class PumaScraper:
     def save_to_json(self, product: ProductInfo, filename: str = "product_info.json"):
         """保存商品信息到JSON文件"""
         try:
-            with open(filename, 'w', encoding='utf-8') as f:
+            output_path = get_output_path(filename)
+            with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(asdict(product), f, ensure_ascii=False, indent=2)
-            logger.info(f"商品信息已保存到 {filename}")
+            logger.info(f"商品信息已保存到 {output_path}")
         except Exception as e:
             logger.error(f"保存文件时出错: {e}")
 

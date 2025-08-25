@@ -11,6 +11,7 @@ import json
 from datetime import datetime
 import sys
 import os
+from config import get_output_path
 
 # 导入各种爬虫模块
 try:
@@ -29,6 +30,11 @@ except ImportError:
     PumaGraphQLScraper = None
     test_with_provided_data = None
 
+try:
+    from complete_graphql_api import CompleteGraphQLAPI
+except ImportError:
+    CompleteGraphQLAPI = None
+
 # 导入请求模块用于尺码获取
 import requests
 import re
@@ -46,7 +52,7 @@ def setup_logging(verbose=False):
     )
 
 def get_enhanced_sizes(url):
-    """增强的尺码获取功能 - 基于用户提供的curl请求"""
+    """增强的尺码获取功能 - 解决locale错误问题"""
     print("🔍 尝试获取详细尺码信息...")
     
     # 从URL提取产品ID
@@ -61,33 +67,44 @@ def get_enhanced_sizes(url):
     # GraphQL API端点
     graphql_url = "https://us.puma.com/api/graphql"
     
-    # 基于用户提供的curl请求构建请求头
-    headers = {
-        'Accept': 'application/graphql-response+json, application/graphql+json, application/json',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Content-Type': 'application/json',
-        'Customer-Group': '19f53594b6c24daa468fd3f0f2b87b1373b0bda5621be473324fce5d0206b44d',
-        'Customer-Id': 'bck0g1lXsZkrcRlXaUlWYYwrJH',
-        'Locale': 'en-US',
-        'Origin': 'https://us.puma.com',
-        'Priority': 'u=1, i',
-        'Puma-Request-Source': 'web',
-        'Referer': url,
-        'Sec-Ch-Ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"macOS"',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-        'X-Graphql-Client-Name': 'nitro-fe',
-        'X-Graphql-Client-Version': '961757de4b96db7c1c36770d26de3e4fb6f16f24',
-        'X-Operation-Name': 'LazyPDP'
-    }
+    # 尝试多种请求头配置来解决locale问题
+    header_variations = [
+        # 配置1: 基础配置，不包含可能有问题的头
+        {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Origin': 'https://us.puma.com',
+            'Referer': url,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+            'X-Graphql-Client-Name': 'nitro-fe',
+            'X-Operation-Name': 'LazyPDP'
+        },
+        # 配置2: 添加Accept-Language但使用标准值
+        {
+            'Accept': 'application/json',
+            'Accept-Language': 'en',
+            'Content-Type': 'application/json',
+            'Origin': 'https://us.puma.com',
+            'Referer': url,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+            'X-Graphql-Client-Name': 'nitro-fe',
+            'X-Operation-Name': 'LazyPDP'
+        },
+        # 配置3: 完整配置但移除Locale头
+        {
+            'Accept': 'application/graphql-response+json, application/graphql+json, application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Content-Type': 'application/json',
+            'Origin': 'https://us.puma.com',
+            'Referer': url,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+            'X-Graphql-Client-Name': 'nitro-fe',
+            'X-Operation-Name': 'LazyPDP'
+        }
+    ]
     
-    # GraphQL查询
-    query = """
+    # 简化的GraphQL查询，减少复杂性
+    simple_query = """
     query LazyPDP($id: ID!) {
       product(id: $id) {
         id
@@ -103,46 +120,51 @@ def get_enhanced_sizes(url):
               productId
               orderable
               maxOrderableQuantity
-              __typename
             }
-            __typename
           }
-          __typename
         }
-        __typename
       }
     }
     """
     
-    payload = {
-        "operationName": "LazyPDP",
-        "query": query,
-        "variables": {"id": product_id}
-    }
-    
-    try:
-        print(f"   📡 发送GraphQL请求...")
-        response = requests.post(graphql_url, headers=headers, json=payload, timeout=15)
+    # 尝试不同的配置
+    for i, headers in enumerate(header_variations, 1):
+        print(f"   📡 尝试配置 #{i}...")
         
-        if response.status_code == 200:
-            data = response.json()
+        payload = {
+            "operationName": "LazyPDP",
+            "query": simple_query,
+            "variables": {"id": product_id}
+        }
+        
+        try:
+            response = requests.post(graphql_url, headers=headers, json=payload, timeout=15)
+            print(f"      响应状态: {response.status_code}")
             
-            if 'errors' in data:
-                print(f"   ❌ GraphQL错误: {data['errors'][0].get('message', '')}")
-                return get_fallback_sizes_for_product(product_id, url)
-            
-            if 'data' in data and data['data'] and data['data'].get('product'):
-                return parse_graphql_sizes(data['data']['product'])
+            if response.status_code == 200:
+                data = response.json()
+                
+                if 'errors' in data:
+                    error_msg = data['errors'][0].get('message', '') if data['errors'] else ''
+                    print(f"      GraphQL错误: {error_msg}")
+                    if 'locale' not in error_msg.lower():
+                        # 如果不是locale错误，继续尝试下一个配置
+                        continue
+                else:
+                    if 'data' in data and data['data'] and data['data'].get('product'):
+                        print(f"   ✅ 配置 #{i} 成功获取数据")
+                        return parse_graphql_sizes(data['data']['product'])
+                    else:
+                        print(f"      无产品数据")
             else:
-                print(f"   ❌ 无产品数据")
-                return get_fallback_sizes_for_product(product_id, url)
-        else:
-            print(f"   ❌ API请求失败: {response.status_code}")
-            return get_fallback_sizes_for_product(product_id, url)
-            
-    except Exception as e:
-        print(f"   ❌ 请求异常: {e}")
-        return get_fallback_sizes_for_product(product_id, url)
+                print(f"      API请求失败: {response.status_code}")
+                print(f"      响应内容: {response.text[:200]}")
+                
+        except Exception as e:
+            print(f"      请求异常: {e}")
+    
+    print(f"   ❌ 所有GraphQL配置都失败，使用备用方案")
+    return get_fallback_sizes_for_product(product_id, url)
 
 def parse_graphql_sizes(product_data):
     """解析GraphQL返回的尺码数据"""
@@ -242,18 +264,15 @@ def validate_url(url):
 
 def scrape_with_requests(url, save_file=None):
     """使用requests方法爬取"""
-    print("🔄 使用 requests + BeautifulSoup 方法...")
-    
-    if not PumaScraper:
-        print("❌ PumaScraper模块不可用")
-        return None
+    print("📡 使用requests方法...")
     
     try:
+        from puma_scraper import PumaScraper
         scraper = PumaScraper()
         product = scraper.scrape_product(url)
         
-        if product and product.name:
-            result = {
+        if product:
+            product_dict = {
                 'name': product.name,
                 'price': product.price,
                 'original_price': product.original_price,
@@ -272,9 +291,12 @@ def scrape_with_requests(url, save_file=None):
             }
             
             if save_file:
-                scraper.save_to_json(product, save_file)
+                output_path = get_output_path(save_file)
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    json.dump(product_dict, f, ensure_ascii=False, indent=2)
+                print(f"✅ 数据已保存到: {output_path}")
             
-            return result
+            return product_dict
         else:
             print("❌ requests方法获取数据失败")
             return None
@@ -283,108 +305,12 @@ def scrape_with_requests(url, save_file=None):
         print(f"❌ requests方法出错: {e}")
         return None
 
-def scrape_with_graphql(url, save_file=None):
-    """使用GraphQL API方法爬取"""
-    print("🚀 使用 GraphQL API 方法...")
-    
-    if not PumaGraphQLScraper:
-        print("❌ GraphQL爬虫模块不可用")
-        return None
-    
-    try:
-        scraper = PumaGraphQLScraper()
-        product = scraper.scrape_product(url)
-        
-        if product and product.product_id:
-            result = {
-                'name': product.name,
-                'price': product.price,
-                'currency': product.currency,
-                'description': product.description,
-                'color': product.color,
-                'brand': product.brand,
-                'product_id': product.product_id,
-                'sizes': [],
-                'images': getattr(product, 'images', []),
-                'features': product.features,
-                'details': product.details,
-                'material_composition': product.material_composition,
-                'mens_sizes': product.mens_sizes,
-                'womens_sizes': product.womens_sizes,
-                'measurements_metric': product.measurements_metric,
-                'measurements_imperial': product.measurements_imperial,
-                'url': url,
-                'scraped_at': product.scraped_at,
-                'method': 'graphql'
-            }
-            
-            # 合并尺码信息
-            all_sizes = []
-            if product.mens_sizes:
-                for size in product.mens_sizes:
-                    label = f"Men {size['label']}"
-                    if not size['orderable']:
-                        label += " (缺货)"
-                    all_sizes.append(label)
-            if product.womens_sizes:
-                for size in product.womens_sizes:
-                    label = f"Women {size['label']}"
-                    if not size['orderable']:
-                        label += " (缺货)"
-                    all_sizes.append(label)
-            result['sizes'] = all_sizes
-            
-            if save_file:
-                scraper.save_to_json(product, save_file)
-            
-            return result
-        else:
-            print("❌ GraphQL API获取数据失败，尝试使用测试数据...")
-            if test_with_provided_data:
-                test_product = test_with_provided_data()
-                if test_product:
-                    result = {
-                        'name': test_product.name,
-                        'price': test_product.price,
-                        'currency': test_product.currency,
-                        'description': test_product.description,
-                        'color': test_product.color,
-                        'brand': test_product.brand,
-                        'product_id': test_product.product_id,
-                        'sizes': test_product.all_sizes or [],
-                        'images': getattr(test_product, 'images', []),
-                        'features': test_product.features,
-                        'details': test_product.details,
-                        'material_composition': test_product.material_composition,
-                        'mens_sizes': test_product.mens_sizes,
-                        'womens_sizes': test_product.womens_sizes,
-                        'measurements_metric': test_product.measurements_metric,
-                        'measurements_imperial': test_product.measurements_imperial,
-                        'url': url,
-                        'scraped_at': test_product.scraped_at,
-                        'method': 'graphql_test_data'
-                    }
-                    
-                    # 确保图片信息被正确传递
-                    if hasattr(test_product, 'images') and test_product.images:
-                        result['images'] = test_product.images
-                    
-                    return result
-            return None
-            
-    except Exception as e:
-        print(f"❌ GraphQL方法出错: {e}")
-        return None
-
 def scrape_with_enhanced(url, save_file=None):
-    """使用增强版方法爬取"""
-    print("🔄 使用增强版爬取方法...")
-    
-    if not enhanced_scrape_puma:
-        print("❌ 增强版爬虫模块不可用")
-        return None
+    """使用enhanced方法爬取"""
+    print("🚀 使用enhanced方法...")
     
     try:
+        from enhanced_puma_scraper import enhanced_scrape_puma
         product = enhanced_scrape_puma(url)
         
         if product and product.get('name'):
@@ -405,9 +331,10 @@ def scrape_with_enhanced(url, save_file=None):
                 print("   ⚠️ 未能获取详细尺码，保持原有数据")
             
             if save_file:
-                with open(save_file, 'w', encoding='utf-8') as f:
+                output_path = get_output_path(save_file)
+                with open(output_path, 'w', encoding='utf-8') as f:
                     json.dump(product, f, ensure_ascii=False, indent=2)
-                print(f"✅ 数据已保存到: {save_file}")
+                print(f"✅ 数据已保存到: {output_path}")
             
             return product
         else:
@@ -415,27 +342,106 @@ def scrape_with_enhanced(url, save_file=None):
             return None
             
     except Exception as e:
-        print(f"❌ 增强版方法出错: {e}")
+        print("❌ 增强版方法出错: {e}")
+        return None
+
+def scrape_with_graphql(url, save_file=None):
+    """使用GraphQL方法爬取"""
+    print("📊 使用GraphQL方法...")
+    
+    try:
+        from puma_graphql_scraper import PumaGraphQLScraper
+        scraper = PumaGraphQLScraper()
+        product = scraper.scrape_product(url)
+        
+        if product:
+            product_dict = {
+                'name': product.name,
+                'product_id': product.product_id,
+                'brand': product.brand,
+                'description': product.description,
+                'details': product.details,
+                'material_composition': product.material_composition,
+                'mens_sizes': product.mens_sizes,
+                'womens_sizes': product.womens_sizes,
+                'images': product.images,
+                'all_images': product.all_images,
+                'price': product.price,
+                'availability': product.availability,
+                'url': url,
+                'scraped_at': datetime.now().isoformat(),
+                'method': 'graphql'
+            }
+            
+            if save_file:
+                output_path = get_output_path(save_file)
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    json.dump(product_dict, f, ensure_ascii=False, indent=2)
+                print(f"✅ 数据已保存到: {output_path}")
+            
+            return product_dict
+        else:
+            print("❌ GraphQL方法获取数据失败")
+            return None
+            
+    except Exception as e:
+        print(f"❌ GraphQL方法出错: {e}")
+        return None
+
+def scrape_with_complete_graphql(url, save_file=None):
+    """使用完整GraphQL API方法爬取"""
+    print("🚀 使用完整GraphQL API方法...")
+    
+    try:
+        from complete_graphql_api import CompleteGraphQLAPI
+        api_client = CompleteGraphQLAPI()
+        product = api_client.scrape_product_from_url(url)
+        
+        if product:
+            from dataclasses import asdict
+            product_dict = asdict(product)
+            
+            if save_file:
+                output_path = get_output_path(save_file)
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    json.dump(product_dict, f, ensure_ascii=False, indent=2)
+                print(f"✅ 数据已保存到: {output_path}")
+            
+            return product_dict
+        else:
+            print("❌ 完整GraphQL方法获取数据失败")
+            return None
+            
+    except Exception as e:
+        print(f"❌ 完整GraphQL方法出错: {e}")
         return None
 
 def auto_scrape(url, save_file=None):
     """自动选择最佳爬取方法"""
     print("🤖 自动选择最佳爬取方法...")
     
-    # 首先尝试GraphQL方法（最完整的数据）
+    # 首先尝试完整GraphQL方法（最完整的数据）
+    if CompleteGraphQLAPI:
+        result = scrape_with_complete_graphql(url, save_file)
+        if result and result.get('name'):
+            print("✅ 完整GraphQL方法成功")
+            return result
+    
+    # 如果完整GraphQL失败，尝试原有GraphQL方法
+    print("🔄 完整GraphQL失败，尝试原有GraphQL方法...")
     result = scrape_with_graphql(url, save_file)
     if result and result.get('name'):
         print("✅ GraphQL方法成功")
         return result
     
-    # 如果GraphQL失败，尝试增强版方法
+    # 如果 GraphQL失败，尝试增强版方法
     print("🔄 GraphQL失败，尝试增强版方法...")
     result = scrape_with_enhanced(url, save_file)
     if result and result.get('name'):
         print("✅ 增强版方法成功")
         return result
     
-    # 如果增强版失败，尝试requests方法
+    # 如果增强版失败，尝试 requests方法
     print("🔄 增强版失败，尝试requests方法...")
     result = scrape_with_requests(url, save_file)
     if result and result.get('name'):
@@ -601,9 +607,9 @@ def main():
                        help='商品页面URL (默认为示例商品)')
     
     parser.add_argument('--method', '-m', 
-                       choices=['requests', 'enhanced', 'graphql', 'auto'], 
+                       choices=['requests', 'enhanced', 'graphql', 'complete_graphql', 'auto'], 
                        default='auto',
-                       help='爬取方法 (默认: auto, graphql获取最完整数据)')
+                       help='爬取方法 (默认: auto, complete_graphql获取最完整数据)')
     
     parser.add_argument('--output', '-o', 
                        help='输出JSON文件名 (可选)')
@@ -643,6 +649,8 @@ def main():
             result = scrape_with_enhanced(args.url, args.output)
         elif args.method == 'graphql':
             result = scrape_with_graphql(args.url, args.output)
+        elif args.method == 'complete_graphql':
+            result = scrape_with_complete_graphql(args.url, args.output)
         else:  # auto
             result = auto_scrape(args.url, args.output)
         
@@ -651,13 +659,14 @@ def main():
         
         # 如果没有指定输出文件但获取了数据，询问是否保存
         if result and not args.output:
-            response = input("\\n💾 是否保存数据到JSON文件? (y/N): ")
+            response = input("\n💾 是否保存数据到JSON文件? (y/N): ")
             if response.lower() == 'y':
                 filename = f"puma_product_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-                with open(filename, 'w', encoding='utf-8') as f:
+                output_path = get_output_path(filename)
+                with open(output_path, 'w', encoding='utf-8') as f:
                     json.dump(result, f, ensure_ascii=False, indent=2)
-                print(f"✅ 数据已保存到: {filename}")
-        
+                print(f"✅ 数据已保存到: {output_path}")
+
         return result
         
     except KeyboardInterrupt:

@@ -1,0 +1,234 @@
+{
+  "product_id": "404299",
+  "name": "PUMA Product 404299",
+  "header": "",
+  "sub_header": "",
+  "description": "This new and bold take on our classic Suede sneakers has been making waves and establishing its own identity in the street style scene. The Suede XL has recently become a favorite as a skate shoe, just like the iconic Suede Classic did in the '90s. Combining the original's durability with a sturdier midsole and padded upper, the XL is loved by skaters both on and off the board.",
+  "brand": "PUMA",
+  "price": "",
+  "sale_price": "",
+  "promotion_price": "",
+  "best_price": "",
+  "color_name": "",
+  "color_value": "",
+  "orderable": false,
+  "style_number": "",
+  "images": [],
+  "sizes": {
+    "size_groups": [
+      {
+        "label": "Big Kids",
+        "description": null,
+        "sizes": [
+          {
+            "id": "0270",
+            "label": "4",
+            "value": "0270",
+            "productId": "198551975660",
+            "orderable": true,
+            "maxOrderableQuantity": 12
+          },
+          {
+            "id": "0280",
+            "label": "4.5",
+            "value": "0280",
+            "productId": "198551975707",
+            "orderable": true,
+            "maxOrderableQuantity": 12
+          },
+          {
+            "id": "0290",
+            "label": "5",
+            "value": "0290",
+            "productId": "198551975677",
+            "orderable": true,
+            "maxOrderableQuantity": 12
+          },
+          {
+            "id": "0300",
+            "label": "5.5",
+            "value": "0300",
+            "productId": "198551975714",
+            "orderable": true,
+            "maxOrderableQuantity": 12
+          },
+          {
+            "id": "0310",
+            "label": "6",
+            "value": "0310",
+            "productId": "198551975684",
+            "orderable": true,
+            "maxOrderableQuantity": 12
+          },
+          {
+            "id": "0320",
+            "label": "6.5",
+            "value": "0320",
+            "productId": "198551975721",
+            "orderable": true,
+            "maxOrderableQuantity": 12
+          },
+          {
+            "id": "0330",
+            "label": "7",
+            "value": "0330",
+            "productId": "198551975691",
+            "orderable": false,
+            "maxOrderableQuantity": 12
+          }
+        ]
+      }
+    ],
+    "all_sizes": [
+      "4",
+      "4.5",
+      "5",
+      "5.5",
+      "6",
+      "6.5",
+      "7"
+    ],
+    "available_sizes": [
+      "4",
+      "4.5",
+      "5",
+      "5.5",
+      "6",
+      "6.5"
+    ],
+    "unavailable_sizes": [
+      "7"
+    ],
+    "product_measurements": {
+      "metric": [
+        [
+          "Size",
+          "Length"
+        ],
+        [
+          "4",
+          "22"
+        ],
+        [
+          "4.5",
+          "22.5"
+        ],
+        [
+          "5",
+          "23"
+        ],
+        [
+          "5.5",
+          "23.5"
+        ],
+        [
+          "6",
+          "24"
+        ],
+        [
+          "6.5",
+          "24.5"
+        ],
+        [
+          "7",
+          "25"
+        ]
+      ],
+      "imperial": [
+        [
+          "Size",
+          "Length"
+        ],
+        [
+          "4",
+          "8.7"
+        ],
+        [
+          "4.5",
+          "8.9"
+        ],
+        [
+          "5",
+          "9.1"
+        ],
+        [
+          "5.5",
+          "9.3"
+        ],
+        [
+          "6",
+          "9.4"
+        ],
+        [
+          "6.5",
+          "9.6"
+        ],
+        [
+          "7",
+          "9.8"
+        ]
+      ],
+      "__typename": "ProductMeasurements"
+    },
+    "product_story": {
+      "longDescription": "<h3> PRODUCT STORY </h3><p>This new and bold take on our classic Suede sneakers has been making waves and establishing its own identity in the street style scene. The Suede XL has recently become a favorite as a skate shoe, just like the iconic Suede Classic did in the '90s. Combining the original's durability with a sturdier midsole and padded upper, the XL is loved by skaters both on and off the board.</p><h3> FEATURES & BENEFITS </h3><ul><li>PUMA's leather products support responsible manufacturing via the Leather Working Group: www.leatherworkinggroup.com</li></ul><h3> DETAILS </h3><ul><li>Width: Regular</li><li>Toe Type: Rounded</li><li>Fastener: Laces</li><li>Main material of upper: Leather</li><li>Heel type: Flat</li><li>Lining: Textile</li><li>Outsole: Rubber</li><li>PUMA Youth: Recommended for older kids between 8 and 16 years</li></ul>",
+      "materialComposition": [
+        "Sockliner: 100% Textile",
+        "Outsole: 100% Rubber",
+        "Upper: 97.32% Leather - cow, 2.68% Synthetic",
+        "Lining: 63.22% Textile, 36.78% Synthetic"
+      ],
+      "careInstructions": null,
+      "manufacturerInfo": {
+        "manufacturerAddress": null,
+        "countryOfOrigin": {
+          "label": null,
+          "content": [
+            ""
+          ],
+          "__typename": "Info"
+        },
+        "__typename": "ManufacturerInfo"
+      },
+      "productKeywords": [],
+      "__typename": "ProductStory"
+    },
+    "material_composition_from_story": [
+      "Sockliner: 100% Textile",
+      "Outsole: 100% Rubber",
+      "Upper: 97.32% Leather - cow, 2.68% Synthetic",
+      "Lining: 63.22% Textile, 36.78% Synthetic"
+    ],
+    "care_instructions": [],
+    "product_keywords": []
+  },
+  "material_composition": [
+    "Sockliner: 100% Textile",
+    "Outsole: 100% Rubber",
+    "Upper: 97.32% Leather - cow, 2.68% Synthetic",
+    "Lining: 63.22% Textile, 36.78% Synthetic"
+  ],
+  "manufacturer_info": {
+    "manufacturerAddress": null,
+    "countryOfOrigin": {
+      "label": null,
+      "content": [
+        ""
+      ],
+      "__typename": "Info"
+    },
+    "__typename": "ManufacturerInfo"
+  },
+  "promotions": [],
+  "badges": [],
+  "display_out_of_stock": null,
+  "is_final_sale": false,
+  "average_rating": "",
+  "amount_of_reviews": "",
+  "size_chart_id": "",
+  "product_division": "",
+  "ean": "",
+  "scraped_at": "2025-08-25T10:50:52.065007",
+  "method": "working_complete_graphql_api",
+  "url": "https://us.puma.com/us/en/pd/suede-xl-leopard-jr-youth/404299?swatch=02"
+}

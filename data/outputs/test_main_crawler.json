@@ -1,0 +1,63 @@
+{
+  "product_id": "405357",
+  "name": "Speedcat Metallic Sneakers Women",
+  "header": "Speedcat Metallic",
+  "sub_header": "Women's Sneakers",
+  "description": "For over two decades, the PUMA Speedcat has been a streetwear and racing culture icon. Originally engineered as an ultra-slim driving shoe designed to shave milliseconds off lap times, it later made its mark on the streets of global fashion capitals.",
+  "brand": "Speedcat",
+  "price": "100",
+  "sale_price": "100",
+  "promotion_price": "",
+  "best_price": "",
+  "color_name": "PUMA Silver-PUMA Black",
+  "color_value": "01",
+  "orderable": true,
+  "style_number": "405357_01",
+  "images": [
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/https://images.puma.net/images/405357/01/sv01/fnd/PNA/w/2000/h/2000//PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/sv01/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/mod01/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/mod02/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/bv/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/sv02/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/sv03/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/405357/01/sv04/fnd/PNA/fmt/png/Speedcat-Metallic-Sneakers-Women"
+  ],
+  "sizes": null,
+  "material_composition": [
+    "Sockliner: 100% Textile",
+    "Outsole: 100% Rubber",
+    "Upper: 97.82% Leather - cow, 2.18% Textile",
+    "Lining: 100% Textile"
+  ],
+  "manufacturer_info": {
+    "manufacturerAddress": null,
+    "countryOfOrigin": {
+      "label": null,
+      "content": [
+        ""
+      ],
+      "__typename": "Info"
+    },
+    "__typename": "ManufacturerInfo"
+  },
+  "promotions": null,
+  "badges": [
+    {
+      "id": "best-seller",
+      "label": "Best Seller",
+      "__typename": "ProductBadge"
+    }
+  ],
+  "display_out_of_stock": null,
+  "is_final_sale": null,
+  "average_rating": "None",
+  "amount_of_reviews": "None",
+  "size_chart_id": "size-chart-womens-footwear",
+  "product_division": "Footwear",
+  "ean": "4069156987760",
+  "scraped_at": "2025-08-25T10:25:33.776884",
+  "method": "complete_graphql_api",
+  "url": "https://us.puma.com/us/en/pd/speedcat-metallic-sneakers-women/405357?swatch=01"
+}

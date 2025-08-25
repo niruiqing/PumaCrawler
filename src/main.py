@@ -11,6 +11,7 @@ from puma_scraper import PumaScraper
 from puma_scraper_selenium import PumaSeleniumScraper
 import json
 from dataclasses import asdict
+from config import get_output_path
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -111,9 +112,10 @@ def print_product_info(product_dict: dict):
 def save_product_info(product_dict: dict, filename: str = "puma_product.json"):
     """保存商品信息到文件"""
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        output_path = get_output_path(filename)
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(product_dict, f, ensure_ascii=False, indent=2)
-        print(f"✅ 商品信息已保存到: {filename}")
+        print(f"✅ 商品信息已保存到: {output_path}")
     except Exception as e:
         print(f"❌ 保存文件失败: {e}")
 

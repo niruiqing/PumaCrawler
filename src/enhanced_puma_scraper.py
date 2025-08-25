@@ -10,6 +10,7 @@ import json
 import re
 from urllib.parse import urljoin
 import logging
+from config import get_output_path
 
 logger = logging.getLogger(__name__)
 
@@ -374,9 +375,10 @@ def print_product_info(product):
 def save_to_json(product, filename="enhanced_puma_product.json"):
     """保存到JSON文件"""
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        output_path = get_output_path(filename)
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(product, f, ensure_ascii=False, indent=2)
-        print(f"✅ 商品信息已保存到: {filename}")
+        print(f"✅ 商品信息已保存到: {output_path}")
     except Exception as e:
         print(f"❌ 保存失败: {e}")
 

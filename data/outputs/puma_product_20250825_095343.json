@@ -1,0 +1,447 @@
+{
+  "name": "evoSPEED Mid Distance NITRO™ Elite 3",
+  "price": "190",
+  "currency": "USD",
+  "description": "Chase your next PR with DIGITOKYO. Built with NITROFOAM™ ELITE cushioning for lightweight responsiveness and a PWRPLATE for explosive propulsion, these track and field shoes also feature an ultra-breathable upper and customizable grip. You're lacing up for comfort and control. Get ready to own the track.",
+  "color": "Color Code: 01",
+  "brand": "PUMA",
+  "product_id": "312637",
+  "sizes": [
+    "Mens 7",
+    "Mens 7.5",
+    "Mens 8",
+    "Mens 8.5",
+    "Mens 9",
+    "Mens 9.5",
+    "Mens 10",
+    "Mens 10.5",
+    "Mens 11",
+    "Mens 11.5",
+    "Mens 12",
+    "Mens 12.5 (缺货)",
+    "Mens 13",
+    "Womens 8.5",
+    "Womens 9",
+    "Womens 9.5",
+    "Womens 10",
+    "Womens 10.5",
+    "Womens 11",
+    "Womens 11.5",
+    "Womens 12",
+    "Womens 12.5",
+    "Womens 13",
+    "Womens 13.5",
+    "Womens 14 (缺货)",
+    "Womens 14.5"
+  ],
+  "images": [
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/312637/01/sv01/fnd/PNA/fmt/png/evoSPEED-Mid-Distance-NITRO™-Elite-3-Track-&-Field-Distance-Spikes",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/312637/01/fnd/PNA/fmt/png/evoSPEED-Mid-Distance-NITRO™-Elite-3-Track-&-Field-Distance-Spikes",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/312637/01/bv/fnd/PNA/fmt/png/evoSPEED-Mid-Distance-NITRO™-Elite-3-Track-&-Field-Distance-Spikes",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/312637/01/sv02/fnd/PNA/fmt/png/evoSPEED-Mid-Distance-NITRO™-Elite-3-Track-&-Field-Distance-Spikes",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/312637/01/sv03/fnd/PNA/fmt/png/evoSPEED-Mid-Distance-NITRO™-Elite-3-Track-&-Field-Distance-Spikes",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_600,h_600/global/312637/01/sv04/fnd/PNA/fmt/png/evoSPEED-Mid-Distance-NITRO™-Elite-3-Track-&-Field-Distance-Spikes"
+  ],
+  "features": [
+    "NITROFOAM™ Elite: Premium performance foam technology that provides pinnacle responsiveness in an extremely lightweight package",
+    "PWRPLATE: Carbon fibre plate engineered to stabilise the midsole while maximising energy transfer"
+  ],
+  "details": [
+    "Width: Regular",
+    "Toe Type: Rounded",
+    "Fastener: Laces",
+    "Main material of upper: Textile",
+    "Surface type: track",
+    "Shoe weight: 145g (size UK8)",
+    "6 changeable pins",
+    "Pronation: Neutral"
+  ],
+  "material_composition": [
+    "Midsole: 100% Synthetic",
+    "Sockliner: 100% Textile",
+    "Outsole: 100% Synthetic",
+    "Upper: 84% Textile, 16% Synthetic",
+    "Lining: 100% Textile"
+  ],
+  "mens_sizes": [
+    {
+      "label": "8.5",
+      "value": "0200",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009332"
+    },
+    {
+      "label": "9",
+      "value": "0210",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009400"
+    },
+    {
+      "label": "9.5",
+      "value": "0220",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009349"
+    },
+    {
+      "label": "10",
+      "value": "0230",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009417"
+    },
+    {
+      "label": "10.5",
+      "value": "0240",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009356"
+    },
+    {
+      "label": "11",
+      "value": "0250",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009424"
+    },
+    {
+      "label": "11.5",
+      "value": "0260",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009363"
+    },
+    {
+      "label": "12",
+      "value": "0270",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009257"
+    },
+    {
+      "label": "12.5",
+      "value": "0280",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009431"
+    },
+    {
+      "label": "13",
+      "value": "0290",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009295"
+    },
+    {
+      "label": "13.5",
+      "value": "0300",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009264"
+    },
+    {
+      "label": "14",
+      "value": "0310",
+      "orderable": false,
+      "maxQuantity": 12,
+      "productId": "198553009288"
+    },
+    {
+      "label": "14.5",
+      "value": "0320",
+      "orderable": true,
+      "maxQuantity": 12,
+      "productId": "198553009271"
+    }
+  ],
+  "womens_sizes": [],
+  "measurements_metric": [
+    [
+      "Size",
+      "Heel Height",
+      "Length",
+      "Weight",
+      "Width"
+    ],
+    [
+      "4",
+      "",
+      "22",
+      "",
+      ""
+    ],
+    [
+      "4.5",
+      "",
+      "22.5",
+      "",
+      ""
+    ],
+    [
+      "5",
+      "",
+      "23",
+      "",
+      ""
+    ],
+    [
+      "5.5",
+      "",
+      "23.5",
+      "",
+      ""
+    ],
+    [
+      "6",
+      "1.5",
+      "24",
+      "",
+      "9"
+    ],
+    [
+      "6.5",
+      "1.5",
+      "24.5",
+      "",
+      "9"
+    ],
+    [
+      "7",
+      "1.5",
+      "25",
+      "",
+      "9"
+    ],
+    [
+      "7.5",
+      "1.5",
+      "25.5",
+      "",
+      "9"
+    ],
+    [
+      "8",
+      "1.5",
+      "26",
+      "",
+      "9"
+    ],
+    [
+      "8.5",
+      "1.5",
+      "26.5",
+      "",
+      "9"
+    ],
+    [
+      "9",
+      "1.5",
+      "27",
+      "194",
+      "9.5"
+    ],
+    [
+      "9.5",
+      "1.5",
+      "27.5",
+      "",
+      "9.5"
+    ],
+    [
+      "10",
+      "1.5",
+      "28",
+      "",
+      "9.5"
+    ],
+    [
+      "10.5",
+      "1.5",
+      "28.5",
+      "",
+      "9.5"
+    ],
+    [
+      "11",
+      "",
+      "29",
+      "",
+      ""
+    ],
+    [
+      "11.5",
+      "",
+      "29.5",
+      "",
+      ""
+    ],
+    [
+      "12",
+      "",
+      "30",
+      "",
+      ""
+    ],
+    [
+      "12.5",
+      "",
+      "30.5",
+      "",
+      ""
+    ],
+    [
+      "13",
+      "",
+      "31",
+      "",
+      ""
+    ]
+  ],
+  "measurements_imperial": [
+    [
+      "Size",
+      "Heel Height",
+      "Length",
+      "Weight",
+      "Width"
+    ],
+    [
+      "4",
+      "",
+      "8.7",
+      "",
+      ""
+    ],
+    [
+      "4.5",
+      "",
+      "8.9",
+      "",
+      ""
+    ],
+    [
+      "5",
+      "",
+      "9.1",
+      "",
+      ""
+    ],
+    [
+      "5.5",
+      "",
+      "9.3",
+      "",
+      ""
+    ],
+    [
+      "6",
+      "0.6",
+      "9.4",
+      "",
+      "3.5"
+    ],
+    [
+      "6.5",
+      "0.6",
+      "9.6",
+      "",
+      "3.5"
+    ],
+    [
+      "7",
+      "0.6",
+      "9.8",
+      "",
+      "3.5"
+    ],
+    [
+      "7.5",
+      "0.6",
+      "10.0",
+      "",
+      "3.5"
+    ],
+    [
+      "8",
+      "0.6",
+      "10.2",
+      "",
+      "3.5"
+    ],
+    [
+      "8.5",
+      "0.6",
+      "10.4",
+      "",
+      "3.5"
+    ],
+    [
+      "9",
+      "0.6",
+      "10.6",
+      "7",
+      "3.7"
+    ],
+    [
+      "9.5",
+      "0.6",
+      "10.8",
+      "",
+      "3.7"
+    ],
+    [
+      "10",
+      "0.6",
+      "11.0",
+      "",
+      "3.7"
+    ],
+    [
+      "10.5",
+      "0.6",
+      "11.2",
+      "",
+      "3.7"
+    ],
+    [
+      "11",
+      "",
+      "11.4",
+      "",
+      ""
+    ],
+    [
+      "11.5",
+      "",
+      "11.6",
+      "",
+      ""
+    ],
+    [
+      "12",
+      "",
+      "11.8",
+      "",
+      ""
+    ],
+    [
+      "12.5",
+      "",
+      "12.0",
+      "",
+      ""
+    ],
+    [
+      "13",
+      "",
+      "12.2",
+      "",
+      ""
+    ]
+  ],
+  "url": "https://us.puma.com/us/en/pd/speedcat-metallic-sneakers-women/405357?swatch=01",
+  "scraped_at": "2025-08-25T09:53:38.699738",
+  "method": "graphql_test_data"
+}

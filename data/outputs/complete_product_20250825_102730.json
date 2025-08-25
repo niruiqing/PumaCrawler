@@ -1,0 +1,61 @@
+{
+  "product_id": "404299",
+  "name": "Suede XL Leopard Jr Youth",
+  "header": "Suede XL Leopard",
+  "sub_header": "Big Kids' Easy On Animal Print Sneakers",
+  "description": "This new and bold take on our classic Suede sneakers has been making waves and establishing its own identity in the street style scene. The Suede XL has recently become a favorite as a skate shoe, just like the iconic Suede Classic did in the '90s. Combining the original's durability with a sturdier midsole and padded upper, the XL is loved by skaters both on and off the board.",
+  "brand": null,
+  "price": "65",
+  "sale_price": "65",
+  "promotion_price": "",
+  "best_price": "",
+  "color_name": "Alpine Snow-Warm White",
+  "color_value": "02",
+  "orderable": true,
+  "style_number": "404299_02",
+  "images": [
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/404299/02/https://images.puma.net/images/404299/02/sv01/fnd/PNA/w/2000/h/2000//PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/404299/02/sv01/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/404299/02/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/404299/02/bv/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/404299/02/sv02/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/404299/02/sv03/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth",
+    "https://images.puma.com/image/upload/f_auto,q_auto,b_rgb:fafafa,w_2000,h_2000/global/404299/02/sv04/fnd/PNA/fmt/png/Suede-XL-Leopard-Jr-Youth"
+  ],
+  "sizes": null,
+  "material_composition": [
+    "Sockliner: 100% Textile",
+    "Outsole: 100% Rubber",
+    "Upper: 97.32% Leather - cow, 2.68% Synthetic",
+    "Lining: 63.22% Textile, 36.78% Synthetic"
+  ],
+  "manufacturer_info": {
+    "manufacturerAddress": null,
+    "countryOfOrigin": {
+      "label": null,
+      "content": [
+        ""
+      ],
+      "__typename": "Info"
+    },
+    "__typename": "ManufacturerInfo"
+  },
+  "promotions": null,
+  "badges": [
+    {
+      "id": "new",
+      "label": "New",
+      "__typename": "ProductBadge"
+    }
+  ],
+  "display_out_of_stock": null,
+  "is_final_sale": null,
+  "average_rating": "None",
+  "amount_of_reviews": "None",
+  "size_chart_id": "size-charts",
+  "product_division": "Footwear",
+  "ean": "4069156975019",
+  "scraped_at": "2025-08-25T10:27:25.790202",
+  "method": "complete_graphql_api",
+  "url": "https://us.puma.com/us/en/pd/suede-xl-leopard-jr-youth/404299?swatch=02"
+}
