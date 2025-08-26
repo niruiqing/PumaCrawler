@@ -49,6 +49,64 @@ except ImportError as e:
     def asdict(obj):
         return {}
 
+# 添加OpenAI SDK支持
+try:
+    from openai import OpenAI
+except ImportError:
+    print("正在安装openai...")
+    os.system("pip install openai")
+    from openai import OpenAI
+
+# 添加腾讯云SDK支持
+try:
+    from tencentcloud.common import credential
+    from tencentcloud.common.profile.client_profile import ClientProfile
+    from tencentcloud.common.profile.http_profile import HttpProfile
+    from tencentcloud.hunyuan.v20230901 import hunyuan_client, models
+    tencent_sdk_available = True
+    print("✅ 成功导入腾讯云SDK")
+except ImportError as e:
+    print(f"⚠️ 导入腾讯云SDK失败: {e}")
+    tencent_sdk_available = False
+
+# 导入大模型配置
+try:
+    from llm_config import get_llm_config, get_api_key, get_secret_key, get_region, is_llm_enabled, use_tencent_sdk
+    llm_config_available = True
+    print("✅ 成功导入大模型配置")
+except ImportError as e:
+    print(f"⚠️ 导入大模型配置失败: {e}")
+    llm_config_available = False
+    # 创建默认配置
+    def get_llm_config():
+        return {
+            "api_key": "LKEAP_API_KEY",
+            "secret_key": "",
+            "region": "ap-beijing",
+            "base_url": "https://api.lkeap.cloud.tencent.com/v1",
+            "default_model": "deepseek-r1",
+            "temperature": 0.7,
+            "max_tokens": 3000,
+            "timeout": 60,
+            "enable_llm": True,
+            "use_sdk": True
+        }
+    
+    def get_api_key():
+        return "LKEAP_API_KEY"
+    
+    def get_secret_key():
+        return ""
+        
+    def get_region():
+        return "ap-beijing"
+    
+    def is_llm_enabled():
+        return True
+        
+    def use_tencent_sdk():
+        return True
+
 app = Flask(__name__)
 app.secret_key = 'puma_scraper_secret_key'
 
@@ -483,13 +541,258 @@ def process_current_variation(current_variation):
     
     return processed_variation
 
+# 大模型API配置
+tencent_client = None
+
+def get_llm_client():
+    """获取腾讯云大模型API客户端实例"""
+    global tencent_client
+    
+    # 检查是否启用大模型功能
+    if not is_llm_enabled():
+        print("⏭️ 大模型功能未启用")
+        return None
+        
+    # 仅使用腾讯云SDK
+    if tencent_sdk_available:
+        if tencent_client is None:
+            try:
+                # 获取配置
+                config = get_llm_config()
+                api_key = get_api_key()
+                secret_key = get_secret_key()
+                region = get_region()
+                
+                if not api_key or api_key == "LKEAP_API_KEY":
+                    print("❌ 未配置有效的API Key，请检查配置")
+                    return None
+                
+                # 初始化腾讯云凭证
+                cred = credential.Credential(api_key, secret_key)
+                
+                # 配置HTTP
+                httpProfile = HttpProfile()
+                httpProfile.endpoint = "hunyuan.tencentcloudapi.com"
+                
+                # 配置客户端
+                clientProfile = ClientProfile()
+                clientProfile.httpProfile = httpProfile
+                
+                # 初始化客户端
+                tencent_client = hunyuan_client.HunyuanClient(cred, region, clientProfile)
+                print("✅ 成功初始化腾讯云大模型API客户端")
+            except Exception as e:
+                print(f"❌ 初始化腾讯云大模型API客户端失败: {e}")
+                tencent_client = None
+        return tencent_client
+    else:
+        print("❌ 腾讯云SDK不可用")
+        return None
+
+@app.route('/api/llm/chat', methods=['POST'])
+def llm_chat():
+    """大模型对话接口"""
+    try:
+        data = request.get_json()
+        message = data.get('message', '').strip()
+        
+        if not message:
+            return jsonify({
+                'success': False,
+                'error': '请输入有效的消息内容'
+            })
+        
+        client = get_llm_client()
+        if not client:
+            return jsonify({
+                'success': False,
+                'error': '大模型API客户端不可用，请检查API Key配置'
+            })
+        
+        print(f"💬 大模型对话请求: {message[:100]}..." if len(message) > 100 else f"💬 大模型对话请求: {message}")
+        
+        # 使用腾讯云SDK调用
+        config = get_llm_config()
+        
+        # 构造请求
+        req = models.ChatCompletionsRequest()
+        params = {
+            "Model": config.get("default_model", "deepseek-r1"),
+            "Messages": [
+                {
+                    "Role": "user",
+                    "Content": message
+                }
+            ],
+            "Temperature": config.get("temperature", 0.7),
+            "TopP": 1.0
+        }
+        req.from_json_string(json.dumps(params))
+        
+        # 发送请求
+        resp = client.ChatCompletions(req)
+        
+        # 解析响应
+        response_content = resp.Choices[0].Message.Content if resp.Choices else ""
+        
+        print(f"✅ 大模型响应成功，长度: {len(response_content)} 字符")
+        
+        return jsonify({
+            'success': True,
+            'response': response_content,
+            'model': config.get("default_model", "deepseek-r1"),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        error_msg = str(e)
+        print(f"❌ 大模型调用失败: {error_msg}")
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': f'大模型调用失败: {error_msg}'
+        })
+
+@app.route('/api/llm/analyze-product', methods=['POST'])
+def analyze_product():
+    """使用大模型分析商品信息"""
+    try:
+        data = request.get_json()
+        product_data = data.get('product', {})
+        analysis_type = data.get('type', 'general')  # general, description, recommendation
+        
+        if not product_data:
+            return jsonify({
+                'success': False,
+                'error': '请提供有效的商品数据'
+            })
+        
+        client = get_llm_client()
+        if not client:
+            return jsonify({
+                'success': False,
+                'error': '大模型API客户端不可用，请检查API Key配置'
+            })
+        
+        # 构建分析提示词
+        product_name = product_data.get('basic_info', {}).get('name', '未知商品')
+        product_description = product_data.get('basic_info', {}).get('description', '')
+        price_info = product_data.get('price_info', {})
+        materials = product_data.get('materials', [])
+        features = product_data.get('features', [])
+        
+        if analysis_type == 'description':
+            prompt = f"""作为一个专业的商品分析师，请对以下 PUMA 商品进行详细的描述性分析：
+
+商品名称：{product_name}
+商品描述：{product_description}
+价格信息：{json.dumps(price_info, ensure_ascii=False, indent=2)}
+材料信息：{materials}
+产品特性：{features}
+
+请从以下角度提供分析：
+1. 产品定位与特色
+2. 材料与品质分析
+3. 价格竞争力评估
+4. 适用场景推荐
+5. 产品优势与亮点
+
+请用中文回答，内容要专业而易懂。"""
+        elif analysis_type == 'recommendation':
+            prompt = f"""作为一个购物顾问，请为这款 PUMA 商品提供购买建议：
+
+商品名称：{product_name}
+商品描述：{product_description}
+价格信息：{json.dumps(price_info, ensure_ascii=False, indent=2)}
+材料信息：{materials}
+产品特性：{features}
+
+请提供：
+1. 适合人群分析
+2. 搭配建议
+3. 尺码选择指导
+4. 保养与护理建议
+5. 性价比评估
+6. 购买注意事项
+
+请用中文回答，内容要实用且具有指导性。"""
+        else:  # general
+            prompt = f"""作为一个专业的商品分析师，请对以下 PUMA 商品进行综合分析：
+
+商品名称：{product_name}
+商品描述：{product_description}
+价格信息：{json.dumps(price_info, ensure_ascii=False, indent=2)}
+材料信息：{materials}
+产品特性：{features}
+
+请提供简洁而全面的分析，包括产品亮点、适用场景和购买建议。请用中文回答。"""
+        
+        print(f"🔍 开始分析商品: {product_name} (分析类型: {analysis_type})")
+        
+        # 使用腾讯云SDK调用
+        config = get_llm_config()
+        
+        # 构造请求
+        req = models.ChatCompletionsRequest()
+        params = {
+            "Model": config.get("default_model", "deepseek-r1"),
+            "Messages": [
+                {
+                    "Role": "user",
+                    "Content": prompt
+                }
+            ],
+            "Temperature": config.get("temperature", 0.7),
+            "TopP": 1.0
+        }
+        req.from_json_string(json.dumps(params))
+        
+        # 发送请求
+        resp = client.ChatCompletions(req)
+        
+        # 解析响应
+        analysis_result = resp.Choices[0].Message.Content if resp.Choices else ""
+        
+        print(f"✅ 商品分析完成，结果长度: {len(analysis_result)} 字符")
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis_result,
+            'analysis_type': analysis_type,
+            'product_name': product_name,
+            'model': config.get("default_model", "deepseek-r1"),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        error_msg = str(e)
+        print(f"❌ 商品分析失败: {error_msg}")
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': f'商品分析失败: {error_msg}'
+        })
+
 @app.route('/api/health')
 def health_check():
     """健康检查接口"""
+    llm_status = 'available' if get_llm_client() is not None else 'unavailable'
+    llm_enabled = is_llm_enabled()
+    sdk_mode = "tencent" if tencent_sdk_available else "unavailable"
+    
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'service': 'PUMA商品信息查询服务'
+        'service': 'PUMA商品信息查询服务',
+        'features': {
+            'product_scraping': 'available',
+            'llm_analysis': llm_status,
+            'llm_enabled': llm_enabled,
+            'llm_sdk': sdk_mode,
+            'graphql_api': 'available' if new_api_client_available else 'unavailable'
+        }
     })
 
 if __name__ == '__main__':

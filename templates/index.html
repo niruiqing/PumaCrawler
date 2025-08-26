@@ -530,7 +530,7 @@
                 
                 // 展示解析后的结构化内容
                 if (variation.parsed_long_description && Object.keys(variation.parsed_long_description).length > 0) {
-                    fullProductInfoText += `\n=== SKU详细产品故事 ===\n`;
+                    fullProductInfoText += `\n=== 产品故事 ===\n`;
                     
                     for (const [sectionTitle, sectionData] of Object.entries(variation.parsed_long_description)) {
                         fullProductInfoText += `\n**${sectionTitle}**\n`;
